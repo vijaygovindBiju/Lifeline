@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake, ChevronDown } from 'lucide-react';
+import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake, ChevronDown, Bot } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const steps = [
@@ -37,6 +37,7 @@ export default function LifeLineApp() {
   ]);
 
   const [isFinished, setIsFinished] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const nextStep = () => {
     if (currentStep === 6) {
@@ -59,20 +60,29 @@ export default function LifeLineApp() {
     
     setChatHistory(prev => [
       ...prev,
-      { role: 'user', content: answer },
-      { 
-        role: 'assistant', 
-        content: assessmentStep < 2 
-          ? `Got it. ${questions[assessmentStep + 1]}` 
-          : "Thank you for sharing that. I've identified some immediate resources and programs that can help."
-      }
+      { role: 'user', content: answer }
     ]);
 
-    if (assessmentStep < 2) {
-      setAssessmentStep(prev => prev + 1);
-    } else {
-      setTimeout(nextStep, 1500);
-    }
+    setIsTyping(true);
+    
+    setTimeout(() => {
+      setIsTyping(false);
+      setChatHistory(prev => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: assessmentStep < 2 
+            ? `Got it. ${questions[assessmentStep + 1]}` 
+            : "Thank you for sharing that. I've identified some immediate resources and programs that can help."
+        }
+      ]);
+
+      if (assessmentStep < 2) {
+        setAssessmentStep(prev => prev + 1);
+      } else {
+        setTimeout(nextStep, 1500);
+      }
+    }, 1000);
   };
 
   // Screen 1: Welcome
@@ -207,38 +217,63 @@ export default function LifeLineApp() {
     ];
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-right-4 duration-500">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-right-8 duration-700">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 h-[500px] flex flex-col">
-            <div className="p-4 border-b border-slate-50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-sm font-semibold text-slate-400">AI Caseworker</span>
+          <div className="bg-white rounded-[2.5rem] shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-slate-100 h-[600px] flex flex-col overflow-hidden relative">
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <Bot className="text-white w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800">LifeLine Assistant</h4>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active Support</span>
+                  </div>
+                </div>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-8 space-y-2 scroll-smooth">
               <ChatBubble role="user" content={initialInput} />
               {chatHistory.map((msg, i) => (
                 <ChatBubble key={i} role={msg.role as any} content={msg.content} />
               ))}
+              {isTyping && (
+                <div className="flex justify-start mb-6 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center text-white">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div className="px-5 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] rounded-bl-none flex gap-1 shadow-sm">
+                      <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="p-6 border-t border-slate-50 bg-slate-50/50">
-              {assessmentStep < 3 && assessmentAnswers[questions[assessmentStep]] === undefined && (
-                <div className="flex gap-4 justify-center">
-                  <Button 
-                    onClick={() => handleAssessmentAnswer("Yes")}
-                    className="flex-1 h-12 bg-white text-blue-600 border-2 border-blue-100 hover:bg-blue-50 rounded-xl"
-                  >
-                    Yes
-                  </Button>
-                  <Button 
-                    onClick={() => handleAssessmentAnswer("No")}
-                    className="flex-1 h-12 bg-white text-red-600 border-2 border-red-100 hover:bg-red-50 rounded-xl"
-                  >
-                    No
-                  </Button>
+            <div className="p-8 border-t border-slate-50 bg-slate-50/50">
+              {assessmentStep < 3 && !isTyping && assessmentAnswers[questions[assessmentStep]] === undefined && (
+                <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-500">
+                  <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Select your answer</p>
+                  <div className="flex gap-4 max-w-sm mx-auto w-full">
+                    <Button 
+                      onClick={() => handleAssessmentAnswer("Yes")}
+                      className="flex-1 h-14 bg-white text-blue-600 border-2 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-2xl shadow-sm transition-all text-lg font-bold"
+                    >
+                      Yes
+                    </Button>
+                    <Button 
+                      onClick={() => handleAssessmentAnswer("No")}
+                      className="flex-1 h-14 bg-white text-slate-600 border-2 border-slate-100 hover:bg-slate-800 hover:text-white hover:border-slate-800 rounded-2xl shadow-sm transition-all text-lg font-bold"
+                    >
+                      No
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -246,31 +281,53 @@ export default function LifeLineApp() {
         </div>
 
         <div className="space-y-6">
-          <Card className="rounded-3xl border-none shadow-lg shadow-blue-100/20 bg-gradient-to-br from-blue-600 to-blue-700 text-white overflow-hidden">
-            <CardContent className="p-6 space-y-4">
-              <h3 className="font-bold text-xl">Urgency Assessment</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm font-medium opacity-80">
-                  <span>Step {assessmentStep + 1} of 3</span>
-                  <span>{Math.round(((assessmentStep + 1) / 3) * 100)}%</span>
-                </div>
-                <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-white transition-all duration-500" 
-                    style={{ width: `${((assessmentStep + 1) / 3) * 100}%` }}
-                  />
-                </div>
-              </div>
-              <p className="text-sm opacity-90 leading-relaxed">
+          <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-blue-200/40 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white overflow-hidden p-8 space-y-6">
+            <div className="space-y-2">
+              <h3 className="font-extrabold text-2xl tracking-tight">Urgency Assessment</h3>
+              <p className="text-blue-100 text-sm leading-relaxed">
                 We're checking for immediate risks to ensure you get the right support right away.
               </p>
-            </CardContent>
+            </div>
+            
+            <div className="space-y-4 pt-4">
+              <div className="flex justify-between items-end">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest">Progress</p>
+                  <p className="text-3xl font-black">{Math.round(((assessmentStep + (isTyping ? 0.5 : 0)) / 3) * 100)}%</p>
+                </div>
+                <p className="text-sm font-bold text-blue-200">Step {assessmentStep + 1} of 3</p>
+              </div>
+              <div className="h-3 bg-white/20 rounded-full overflow-hidden p-1 shadow-inner">
+                <div 
+                  className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(255,255,255,0.5)]" 
+                  style={{ width: `${((assessmentStep + (isTyping ? 0.5 : 0)) / 3) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-white/10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <ShieldCheck className="w-4 h-4 text-white" />
+                </div>
+                <p className="text-xs font-medium text-blue-50">Private & Secure</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-white" />
+                </div>
+                <p className="text-xs font-medium text-blue-50">Real-time matching</p>
+              </div>
+            </div>
           </Card>
 
-          <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex gap-3">
-            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800 font-medium">
-              If you are in immediate physical danger, please call emergency services (911) immediately.
+          <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 space-y-3 shadow-sm shadow-amber-100/50">
+            <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
+              <AlertCircle className="w-5 h-5 shrink-0" />
+              Emergency Notice
+            </div>
+            <p className="text-xs text-amber-800/80 leading-relaxed">
+              If you are in immediate physical danger or have a medical emergency, please call **911** or your local emergency services immediately.
             </p>
           </div>
         </div>
