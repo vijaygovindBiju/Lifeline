@@ -45,7 +45,7 @@ export function ResourceCard({ resource, isPriority }: ResourceCardProps) {
           <div className="flex items-center gap-2 text-sm">
             <Clock className={cn("w-4 h-4 shrink-0", resource.openNow ? "text-emerald-500" : "text-gray-400")} />
             <span className={resource.openNow ? "text-emerald-600 font-medium" : "text-gray-500"}>
-              {resource.openNow ? "Open Now" : "Closed"}
+              {resource.statusText || (resource.openNow ? "Open Now" : "Closed")}
             </span>
           </div>
         </div>

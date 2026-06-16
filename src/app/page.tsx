@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RecoveryJourneySidebar } from '@/components/shared/RecoveryJourneySidebar';
 import { SessionHeader } from '@/components/shared/SessionHeader';
+import { ImmediateSupport } from '@/components/shared/ImmediateSupport';
 import { 
   AlertCircle, 
   ArrowRight, 
@@ -56,7 +57,11 @@ export default function LifeLineApp() {
   const [isTyping, setIsTyping] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const progressPercentage = Math.round(((currentStep - 1) / journeySteps.length) * 100);
+  const progressPercentage = currentStep <= 1 ? 0 : 
+                             currentStep === 2 ? 25 :
+                             currentStep === 3 ? 50 :
+                             currentStep === 4 ? 70 :
+                             currentStep === 5 ? 85 : 100;
 
   const nextStep = () => {
     if (currentStep === 6) {
@@ -357,28 +362,7 @@ export default function LifeLineApp() {
 
   // Screen 3: Immediate Support
   const renderSupport = () => (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="space-y-2">
-        <h2 className="text-3xl font-bold text-blue-900">Immediate Support</h2>
-        <p className="text-gray-500">Let's address your most urgent needs first.</p>
-      </div>
-
-      <Alert variant="destructive" className="bg-red-50 border-red-100 text-red-900 rounded-2xl py-4">
-        <AlertCircle className="h-5 w-5 text-red-600" />
-        <AlertTitle className="font-bold">Urgent Action Recommended</AlertTitle>
-        <AlertDescription className="text-red-700">
-          Based on your assessment, we recommend visiting a food pantry today.
-        </AlertDescription>
-      </Alert>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockResources.map((resource) => (
-          <ResourceCard key={resource.id} resource={resource} isPriority={resource.priority === 'high'} />
-        ))}
-      </div>
-
-      <StepNavigation onNext={nextStep} onBack={prevStep} />
-    </div>
+    <ImmediateSupport onNext={nextStep} onBack={prevStep} />
   );
 
   // Screen 4: Programs That May Help

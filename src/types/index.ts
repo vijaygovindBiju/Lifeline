@@ -7,6 +7,7 @@ export interface Resource {
   distance: string;
   address: string;
   openNow: boolean;
+  statusText?: string;
   phone?: string;
   description: string;
   priority: UrgencyLevel;
