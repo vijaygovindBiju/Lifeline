@@ -20,9 +20,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
           </div>
           <div className="hidden md:flex items-center gap-6">
             <nav className="flex items-center gap-6 text-sm font-medium text-slate-500">
-              <a href="#" className="hover:text-blue-600 transition-colors">Emergency</a>
-              <a href="#" className="hover:text-blue-600 transition-colors">Resources</a>
-              <a href="#" className="hover:text-blue-600 transition-colors">About</a>
+              <a href="#how-it-works" className="hover:text-blue-600 transition-colors">How It Works</a>
+              <a href="#" className="hover:text-blue-600 transition-colors">Recovery Journey</a>
+              <a href="#" className="hover:text-blue-600 transition-colors">About LifeLine</a>
             </nav>
           </div>
         </div>

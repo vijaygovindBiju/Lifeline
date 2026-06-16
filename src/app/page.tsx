@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight, Sparkles, FileUp, Send } from 'lucide-react';
+import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const steps = [
@@ -77,43 +77,97 @@ export default function LifeLineApp() {
 
   // Screen 1: Welcome
   const renderWelcome = () => (
-    <div className="max-w-2xl mx-auto space-y-12 py-8 animate-in fade-in duration-700">
+    <div className="max-w-4xl mx-auto space-y-10 pt-2 pb-12 animate-in fade-in duration-700">
       <div className="text-center space-y-4">
-        <h1 className="text-5xl font-extrabold text-blue-900 tracking-tight">LifeLine AI</h1>
-        <p className="text-xl text-blue-600 font-medium">"From crisis to clarity, one decision at a time."</p>
-        <p className="text-gray-500 max-w-md mx-auto">Tell us what's happening. We'll help you understand your next steps.</p>
+        <h1 className="text-5xl md:text-6xl font-extrabold text-blue-900 tracking-tight">LifeLine AI</h1>
+        <div className="space-y-2">
+          <p className="text-xl md:text-2xl text-blue-600 font-semibold italic">"From crisis to clarity, one decision at a time."</p>
+          <p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
+            Need help right now? Start by telling us what's happening. We'll guide you through your next steps.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-6 bg-white p-8 rounded-3xl shadow-xl shadow-blue-100/50 border border-blue-50">
-        <div className="space-y-4">
-          <label className="text-sm font-bold text-gray-400 uppercase tracking-widest">Describe your situation</label>
-          <Textarea 
-            placeholder="e.g., I lost my job and haven't eaten today..." 
-            className="min-h-[150px] text-lg p-4 rounded-2xl border-2 focus:border-blue-400 focus:ring-blue-100 transition-all"
-            value={initialInput}
-            onChange={(e) => setInitialInput(e.target.value)}
-          />
-        </div>
+      <div className="max-w-2xl mx-auto space-y-8 bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-blue-100/60 border border-blue-50/50 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400" />
+        
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <p className="text-sm font-bold text-blue-900/40 uppercase tracking-widest ml-1">Tell us what happened in your own words</p>
+            <Textarea 
+              placeholder="e.g., I lost my job and haven't eaten today..." 
+              className="min-h-[160px] text-lg p-6 rounded-3xl border-2 border-slate-100 focus:border-blue-400 focus:ring-blue-100 transition-all bg-slate-50/30"
+              value={initialInput}
+              onChange={(e) => setInitialInput(e.target.value)}
+            />
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {["I lost my job.", "I haven't eaten today.", "Worried about bills."].map((prompt) => (
-            <button 
-              key={prompt}
-              onClick={() => setInitialInput(prompt)}
-              className="text-xs font-medium py-2 px-3 rounded-full bg-slate-50 text-slate-500 border border-slate-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-100 transition-all text-left"
-            >
-              {prompt}
-            </button>
-          ))}
-        </div>
+          <div className="space-y-3">
+            <p className="text-xs font-semibold text-slate-400 ml-1">Or select a starting point:</p>
+            <div className="flex flex-wrap gap-2">
+              {["I lost my job.", "I haven't eaten today.", "I'm worried about paying my bills."].map((prompt) => (
+                <button 
+                  key={prompt}
+                  onClick={() => setInitialInput(prompt)}
+                  className="text-sm font-medium py-2.5 px-5 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <Button 
-          onClick={nextStep}
-          disabled={!initialInput}
-          className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 rounded-2xl shadow-lg shadow-blue-200"
-        >
-          Get Help <ArrowRight className="ml-2 w-5 h-5" />
-        </Button>
+          <Button 
+            onClick={nextStep}
+            disabled={!initialInput}
+            className="w-full h-16 text-xl font-bold bg-blue-600 hover:bg-blue-700 rounded-2xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5"
+          >
+            Help Me Find My Next Step <ArrowRight className="ml-2 w-6 h-6" />
+          </Button>
+        </div>
+      </div>
+
+      {/* How LifeLine Helps Section */}
+      <div id="how-it-works" className="pt-12 space-y-8">
+        <div className="text-center">
+          <h3 className="text-2xl font-bold text-slate-800">How LifeLine Helps</h3>
+          <div className="w-16 h-1 bg-blue-600 mx-auto mt-2 rounded-full" />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+          {/* Visual connectors for desktop */}
+          <div className="hidden md:block absolute top-1/2 left-[30%] right-[30%] h-0.5 border-t-2 border-dashed border-blue-100 -translate-y-1/2 z-0" />
+          
+          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
+            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
+              <HeartHandshake className="w-6 h-6" />
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-800">Immediate Support</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">Food assistance and urgent resources when you need them most.</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-800">Stability Planning</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">Programs and guidance tailored to your specific situation.</p>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
+            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
+              <Activity className="w-6 h-6" />
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-800">Recovery Planning</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">Clear next steps to help you move forward with confidence.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
