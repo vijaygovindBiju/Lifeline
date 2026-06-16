@@ -15,16 +15,32 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake, ChevronDown, Bot } from 'lucide-react';
+import { RecoveryJourneySidebar } from '@/components/shared/RecoveryJourneySidebar';
+import { SessionHeader } from '@/components/shared/SessionHeader';
+import { 
+  AlertCircle, 
+  ArrowRight, 
+  Sparkles, 
+  FileUp, 
+  Send, 
+  ShieldCheck, 
+  Activity, 
+  HeartHandshake, 
+  ChevronDown, 
+  Bot,
+  ChevronRight,
+  Menu,
+  X
+} from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const steps = [
-  { id: 1, label: 'Welcome' },
-  { id: 2, label: 'Assessment' },
-  { id: 3, label: 'Support' },
-  { id: 4, label: 'Programs' },
-  { id: 5, label: 'Recovery' },
-  { id: 6, label: 'Insights' },
+const journeySteps = [
+  { id: 1, label: 'Situation Shared' },
+  { id: 2, label: 'Immediate Needs Assessed' },
+  { id: 3, label: 'Support Resources' },
+  { id: 4, label: 'Program Guidance' },
+  { id: 5, label: 'Recovery Plan' },
+  { id: 6, label: 'Document Insights' },
 ];
 
 export default function LifeLineApp() {
@@ -38,6 +54,9 @@ export default function LifeLineApp() {
 
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const progressPercentage = Math.round(((currentStep - 1) / journeySteps.length) * 100);
 
   const nextStep = () => {
     if (currentStep === 6) {
@@ -45,6 +64,7 @@ export default function LifeLineApp() {
     } else {
       setCurrentStep(prev => Math.min(prev + 1, 6));
     }
+    setIsMobileSidebarOpen(false);
   };
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
@@ -504,21 +524,80 @@ export default function LifeLineApp() {
     }
   };
 
+  if (currentStep === 1 && !isFinished) {
+    return (
+      <AppLayout>
+        {renderWelcome()}
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout>
-      {currentStep > 1 && (
-        <div className="mb-12 max-w-3xl mx-auto">
-          <ProgressTracker 
-            steps={steps} 
-            currentStep={currentStep} 
-            onStepClick={(id) => setCurrentStep(id)}
-          />
+    <div className="min-h-screen bg-slate-50 flex overflow-hidden font-sans text-slate-900">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block w-80 h-screen sticky top-0 shrink-0">
+        <RecoveryJourneySidebar 
+          steps={journeySteps} 
+          currentStep={currentStep} 
+          onStepClick={(id) => setCurrentStep(id)}
+        />
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsMobileSidebarOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-80 bg-white animate-in slide-in-from-left duration-300">
+            <div className="p-4 flex justify-end border-b border-slate-50">
+              <Button variant="ghost" size="icon" onClick={() => setIsMobileSidebarOpen(false)}>
+                <X className="w-6 h-6 text-slate-400" />
+              </Button>
+            </div>
+            <RecoveryJourneySidebar 
+              steps={journeySteps} 
+              currentStep={currentStep} 
+              onStepClick={(id) => {
+                setCurrentStep(id);
+                setIsMobileSidebarOpen(false);
+              }}
+            />
+          </div>
         </div>
       )}
-      
-      <div className="min-h-[600px]">
-        {renderContent()}
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Mobile Header Toggle */}
+        <div className="lg:hidden bg-white border-b border-slate-100 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="text-white w-5 h-5" />
+            </div>
+            <span className="font-bold text-lg tracking-tight text-slate-800">LifeLine AI</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setIsMobileSidebarOpen(true)} className="flex items-center gap-2">
+            <Menu className="w-4 h-4" /> Journey
+          </Button>
+        </div>
+
+        <SessionHeader 
+          sessionTitle="Current Recovery Session"
+          category="Job Loss Recovery"
+          progress={progressPercentage}
+        />
+        
+        <div className="flex-1 overflow-y-auto bg-slate-50/30">
+          <div className="max-w-5xl mx-auto px-6 py-10">
+            {renderContent()}
+          </div>
+        </div>
+
+        <footer className="bg-white border-t border-slate-100 py-4 px-8 text-center">
+          <p className="text-slate-400 text-xs font-medium">
+            © 2024 LifeLine AI. Focused on human-centered crisis recovery.
+          </p>
+        </footer>
       </div>
-    </AppLayout>
+    </div>
   );
 }
