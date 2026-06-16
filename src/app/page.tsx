@@ -34,6 +34,7 @@ import {
   X
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { getGeminiResponse } from '@/lib/gemini';
 
 const journeySteps = [
   { id: 1, label: 'Situation Shared' },
@@ -71,9 +72,22 @@ export default function LifeLineApp() {
     }
     setIsMobileSidebarOpen(false);
   };
+
+  const startJourney = async () => {
+    setCurrentStep(2);
+    setIsTyping(true);
+    
+    const prompt = `You are LifeLine AI, a compassionate caseworker. A user just shared: "${initialInput}". 
+    Respond with deep empathy (1-2 sentences) and let them know you'll ask a few quick questions to prioritize their immediate safety and needs.`;
+    
+    const response = await getGeminiResponse(prompt);
+    setChatHistory([{ role: 'assistant', content: response }]);
+    setIsTyping(false);
+  };
+
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-  const handleAssessmentAnswer = (answer: string) => {
+  const handleAssessmentAnswer = async (answer: string) => {
     const questions = [
       "Have you eaten today?",
       "Do you have a safe place to stay tonight?",
@@ -90,24 +104,25 @@ export default function LifeLineApp() {
 
     setIsTyping(true);
     
-    setTimeout(() => {
-      setIsTyping(false);
-      setChatHistory(prev => [
-        ...prev,
-        { 
-          role: 'assistant', 
-          content: assessmentStep < 2 
-            ? `Got it. ${questions[assessmentStep + 1]}` 
-            : "Thank you for sharing that. I've identified some immediate resources and programs that can help."
-        }
-      ]);
+    const prompt = `The user answered "${answer}" to the question "${currentQuestion}". 
+    ${assessmentStep < 2 
+      ? `Briefly acknowledge and move to the next question: "${questions[assessmentStep + 1]}".` 
+      : `Provide a final reassuring acknowledgement that you've gathered enough to find immediate help.`}
+    Keep it conversational and brief (max 2 sentences).`;
 
-      if (assessmentStep < 2) {
-        setAssessmentStep(prev => prev + 1);
-      } else {
-        setTimeout(nextStep, 1500);
-      }
-    }, 1000);
+    const aiResponse = await getGeminiResponse(prompt);
+    
+    setIsTyping(false);
+    setChatHistory(prev => [
+      ...prev,
+      { role: 'assistant', content: aiResponse }
+    ]);
+
+    if (assessmentStep < 2) {
+      setAssessmentStep(prev => prev + 1);
+    } else {
+      setTimeout(nextStep, 2000);
+    }
   };
 
   // Screen 1: Welcome
@@ -168,7 +183,7 @@ export default function LifeLineApp() {
 
           <div className="space-y-4">
             <Button 
-              onClick={nextStep}
+              onClick={startJourney}
               disabled={!initialInput}
               className="w-full h-18 text-xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-[1.5rem] shadow-xl shadow-blue-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98] disabled:opacity-50"
             >
