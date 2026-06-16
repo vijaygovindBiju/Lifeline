@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake } from 'lucide-react';
+import { AlertCircle, ArrowRight, Sparkles, FileUp, Send, ShieldCheck, Activity, HeartHandshake, ChevronDown } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const steps = [
@@ -77,29 +77,43 @@ export default function LifeLineApp() {
 
   // Screen 1: Welcome
   const renderWelcome = () => (
-    <div className="max-w-4xl mx-auto space-y-10 pt-2 pb-12 animate-in fade-in duration-700">
-      <div className="text-center space-y-4">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-blue-900 tracking-tight">LifeLine AI</h1>
-        <div className="space-y-2">
-          <p className="text-xl md:text-2xl text-blue-600 font-semibold italic">"From crisis to clarity, one decision at a time."</p>
-          <p className="text-gray-500 max-w-lg mx-auto leading-relaxed">
-            Need help right now? Start by telling us what's happening. We'll guide you through your next steps.
+    <div className="max-w-4xl mx-auto space-y-12 pt-2 pb-16 animate-in fade-in duration-700">
+      <div className="text-center space-y-6">
+        <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-blue-900 tracking-tighter leading-none">
+          LifeLine AI
+        </h1>
+        <div className="space-y-4 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-blue-600 font-bold italic">
+            "From crisis to clarity, one decision at a time."
           </p>
+          <div className="space-y-2">
+            <p className="text-gray-600 text-lg leading-relaxed">
+              Need help right now? Start by telling us what's happening. We'll guide you through your next steps.
+            </p>
+            <p className="text-gray-400 text-sm max-w-md mx-auto">
+              When life changes suddenly, you shouldn't have to navigate it alone.
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto space-y-8 bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-blue-100/60 border border-blue-50/50 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400" />
+      <div className="max-w-2xl mx-auto space-y-8 bg-white p-8 md:p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(37,99,235,0.15)] border border-blue-50/50 relative overflow-hidden transition-all duration-500">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-400 via-blue-600 to-blue-400" />
         
         <div className="space-y-6">
           <div className="space-y-3">
             <p className="text-sm font-bold text-blue-900/40 uppercase tracking-widest ml-1">Tell us what happened in your own words</p>
-            <Textarea 
-              placeholder="e.g., I lost my job and haven't eaten today..." 
-              className="min-h-[160px] text-lg p-6 rounded-3xl border-2 border-slate-100 focus:border-blue-400 focus:ring-blue-100 transition-all bg-slate-50/30"
-              value={initialInput}
-              onChange={(e) => setInitialInput(e.target.value)}
-            />
+            <div className="relative group">
+              <Textarea 
+                placeholder="e.g., I lost my job and haven't eaten today..." 
+                className="min-h-[180px] text-lg p-6 rounded-[2rem] border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-slate-50/30 resize-none shadow-inner"
+                value={initialInput}
+                onChange={(e) => setInitialInput(e.target.value)}
+              />
+              <p className="text-[10px] md:text-xs text-slate-400 mt-2 ml-4 italic">
+                You can share as much or as little as you're comfortable with.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -109,7 +123,7 @@ export default function LifeLineApp() {
                 <button 
                   key={prompt}
                   onClick={() => setInitialInput(prompt)}
-                  className="text-sm font-medium py-2.5 px-5 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  className="text-sm font-medium py-3 px-6 rounded-full bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 hover:shadow-md hover:scale-[1.03] active:scale-[0.97] transition-all duration-200"
                 >
                   {prompt}
                 </button>
@@ -117,53 +131,65 @@ export default function LifeLineApp() {
             </div>
           </div>
 
-          <Button 
-            onClick={nextStep}
-            disabled={!initialInput}
-            className="w-full h-16 text-xl font-bold bg-blue-600 hover:bg-blue-700 rounded-2xl shadow-xl shadow-blue-200 transition-all hover:-translate-y-0.5"
-          >
-            Help Me Find My Next Step <ArrowRight className="ml-2 w-6 h-6" />
-          </Button>
+          <div className="space-y-4">
+            <Button 
+              onClick={nextStep}
+              disabled={!initialInput}
+              className="w-full h-18 text-xl font-extrabold bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-[1.5rem] shadow-xl shadow-blue-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98] disabled:opacity-50"
+            >
+              Help Me Find My Next Step <ArrowRight className="ml-3 w-6 h-6" />
+            </Button>
+            <p className="text-[10px] text-gray-400 text-center px-8">
+              We provide guidance and next steps. Official eligibility should always be confirmed through trusted sources.
+            </p>
+          </div>
         </div>
       </div>
 
       {/* How LifeLine Helps Section */}
-      <div id="how-it-works" className="pt-12 space-y-8">
+      <div id="how-it-works" className="pt-16 space-y-10">
         <div className="text-center">
-          <h3 className="text-2xl font-bold text-slate-800">How LifeLine Helps</h3>
-          <div className="w-16 h-1 bg-blue-600 mx-auto mt-2 rounded-full" />
+          <h3 className="text-2xl font-extrabold text-slate-800 tracking-tight">How LifeLine Helps</h3>
+          <div className="w-16 h-1 bg-blue-600 mx-auto mt-3 rounded-full" />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-          {/* Visual connectors for desktop */}
-          <div className="hidden md:block absolute top-1/2 left-[30%] right-[30%] h-0.5 border-t-2 border-dashed border-blue-100 -translate-y-1/2 z-0" />
-          
-          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
-            <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto">
-              <HeartHandshake className="w-6 h-6" />
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0 relative">
+          <div className="w-full md:w-[30%] bg-white p-8 rounded-[2.5rem] border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all duration-300 hover:shadow-xl hover:border-blue-100 hover:-translate-y-1 group">
+            <div className="w-14 h-14 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <HeartHandshake className="w-7 h-7" />
             </div>
             <div className="space-y-2">
-              <h4 className="font-bold text-slate-800">Immediate Support</h4>
+              <h4 className="font-bold text-slate-800 text-lg">Immediate Support</h4>
               <p className="text-sm text-slate-500 leading-relaxed">Food assistance and urgent resources when you need them most.</p>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
-            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto">
-              <ShieldCheck className="w-6 h-6" />
+          <div className="md:hidden">
+            <ChevronDown className="w-6 h-6 text-blue-200 animate-bounce" />
+          </div>
+          <div className="hidden md:block w-8 h-0.5 bg-gradient-to-r from-blue-100 to-blue-50" />
+
+          <div className="w-full md:w-[30%] bg-white p-8 rounded-[2.5rem] border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all duration-300 hover:shadow-xl hover:border-blue-100 hover:-translate-y-1 group">
+            <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <ShieldCheck className="w-7 h-7" />
             </div>
             <div className="space-y-2">
-              <h4 className="font-bold text-slate-800">Stability Planning</h4>
+              <h4 className="font-bold text-slate-800 text-lg">Stability Planning</h4>
               <p className="text-sm text-slate-500 leading-relaxed">Programs and guidance tailored to your specific situation.</p>
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-3xl border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all hover:shadow-md hover:border-blue-100">
-            <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-              <Activity className="w-6 h-6" />
+          <div className="md:hidden">
+            <ChevronDown className="w-6 h-6 text-blue-200 animate-bounce" />
+          </div>
+          <div className="hidden md:block w-8 h-0.5 bg-gradient-to-r from-blue-50 to-blue-100" />
+
+          <div className="w-full md:w-[30%] bg-white p-8 rounded-[2.5rem] border border-blue-50 shadow-sm space-y-4 relative z-10 text-center transition-all duration-300 hover:shadow-xl hover:border-blue-100 hover:-translate-y-1 group">
+            <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto transition-transform group-hover:scale-110">
+              <Activity className="w-7 h-7" />
             </div>
             <div className="space-y-2">
-              <h4 className="font-bold text-slate-800">Recovery Planning</h4>
+              <h4 className="font-bold text-slate-800 text-lg">Recovery Planning</h4>
               <p className="text-sm text-slate-500 leading-relaxed">Clear next steps to help you move forward with confidence.</p>
             </div>
           </div>
