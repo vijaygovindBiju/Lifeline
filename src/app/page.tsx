@@ -392,9 +392,12 @@ export default function LifeLineApp() {
   // Screen 5: Recovery Plan
   const renderRecovery = () => (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="text-center space-y-3 mb-12">
-        <h2 className="text-4xl font-extrabold text-blue-900">Your Recovery Plan</h2>
-        <p className="text-lg text-blue-600 font-medium italic">"One step at a time. You've got this."</p>
+      <div className="text-center space-y-4 mb-12">
+        <h2 className="text-4xl font-extrabold text-blue-900 tracking-tight">Your Recovery Plan</h2>
+        <div className="space-y-1">
+          <p className="text-lg text-blue-600 font-medium italic">"One step at a time. You've got this."</p>
+          <p className="text-sm text-slate-500 font-medium">"You don't have to solve everything today. Let's focus on the next right step."</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -432,8 +435,8 @@ export default function LifeLineApp() {
         <div className="space-y-6">
           <DocumentInsightCard insight={mockDocumentInsight} />
           <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
-             <p className="text-xs text-blue-700 font-medium">
-              "Recommendations are generated from uploaded information and should be independently reviewed."
+             <p className="text-xs text-blue-700 font-medium leading-relaxed">
+              "These suggestions are based on the information you shared and are intended to support—not replace—your own judgment."
             </p>
           </div>
         </div>
@@ -472,25 +475,39 @@ export default function LifeLineApp() {
   const renderContent = () => {
     if (isFinished) {
       return (
-        <div className="max-w-2xl mx-auto py-20 text-center space-y-6 animate-in zoom-in-95 duration-500">
-          <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-8">
-            <Sparkles className="w-10 h-10" />
+        <div className="max-w-2xl mx-auto py-20 text-center space-y-8 animate-in fade-in zoom-in-95 duration-700">
+          <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-100/50">
+            <Sparkles className="w-12 h-12" />
           </div>
-          <h2 className="text-4xl font-extrabold text-blue-900">You're on the right path.</h2>
-          <p className="text-xl text-gray-600 leading-relaxed">
-            We've saved your recovery plan and document insights. Take it one step at a time, and don't hesitate to reach out if you need more help.
-          </p>
-          <div className="pt-8">
+          <div className="space-y-4">
+            <h2 className="text-5xl font-extrabold text-blue-900 tracking-tight leading-none">Recovery Journey Complete</h2>
+            <p className="text-xl text-gray-600 leading-relaxed max-w-lg mx-auto italic font-medium">
+              "You've taken important steps toward rebuilding stability. Recovery happens one decision at a time."
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
             <Button 
               onClick={() => {
                 setIsFinished(false);
                 setCurrentStep(1);
                 setInitialInput("");
                 setAssessmentStep(0);
+                setAssessmentAnswers({});
+                setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
               }}
-              className="bg-blue-600 hover:bg-blue-700 px-8 py-6 rounded-2xl font-bold"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-16 px-10 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200"
             >
-              Back to Start
+              Start a New Recovery Journey
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => {
+                setIsFinished(false);
+                setCurrentStep(1);
+              }}
+              className="w-full sm:w-auto h-16 px-10 rounded-2xl font-bold text-lg border-2"
+            >
+              Return to Home
             </Button>
           </div>
         </div>
@@ -524,6 +541,7 @@ export default function LifeLineApp() {
           steps={journeySteps} 
           currentStep={currentStep} 
           onStepClick={(id) => setCurrentStep(id)}
+          isFinished={isFinished}
         />
       </div>
 
@@ -544,6 +562,7 @@ export default function LifeLineApp() {
                 setCurrentStep(id);
                 setIsMobileSidebarOpen(false);
               }}
+              isFinished={isFinished}
             />
           </div>
         </div>
@@ -569,6 +588,11 @@ export default function LifeLineApp() {
           category="Job Loss Recovery"
           progress={progressPercentage}
         />
+        <div className="px-8 mt-2 flex gap-2">
+          <Badge variant="secondary" className="bg-blue-100/50 text-blue-600 border-none font-bold px-3 py-1 rounded-full">
+            Guided Support
+          </Badge>
+        </div>
         
         <div className="flex-1 overflow-y-auto bg-slate-50/30">
           <div className="max-w-5xl mx-auto px-6 py-10">
@@ -576,9 +600,9 @@ export default function LifeLineApp() {
           </div>
         </div>
 
-        <footer className="bg-white border-t border-slate-100 py-4 px-8 text-center">
-          <p className="text-slate-400 text-xs font-medium">
-            © 2024 LifeLine AI. Focused on human-centered crisis recovery.
+        <footer className="bg-white border-t border-slate-100 py-6 px-8 text-center">
+          <p className="text-slate-400 text-xs font-medium max-w-2xl mx-auto leading-relaxed">
+            LifeLine AI exists to help people navigate difficult moments with clarity, dignity, and practical next steps.
           </p>
         </footer>
       </div>

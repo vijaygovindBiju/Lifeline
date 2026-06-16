@@ -13,14 +13,17 @@ interface RecoveryJourneySidebarProps {
   currentStep: number;
   onStepClick?: (stepId: number) => void;
   className?: string;
+  isFinished?: boolean;
 }
 
-export function RecoveryJourneySidebar({ steps, currentStep, onStepClick, className }: RecoveryJourneySidebarProps) {
+export function RecoveryJourneySidebar({ steps, currentStep, onStepClick, className, isFinished }: RecoveryJourneySidebarProps) {
   return (
     <aside className={cn("w-full h-full bg-white border-r border-slate-100 flex flex-col p-6 space-y-8 overflow-y-auto", className)}>
       <div className="space-y-1">
         <h2 className="text-xl font-bold text-slate-800 tracking-tight">Recovery Journey</h2>
-        <p className="text-sm text-slate-400 font-medium italic">"One step at a time."</p>
+        <p className="text-sm text-slate-400 font-medium italic">
+          {isFinished ? "Journey Complete." : "\"One step at a time.\""}
+        </p>
       </div>
 
       <nav className="flex-1">
@@ -29,9 +32,9 @@ export function RecoveryJourneySidebar({ steps, currentStep, onStepClick, classN
           <div className="absolute left-[17px] top-2 bottom-2 w-0.5 bg-slate-100" />
           
           {steps.map((step, index) => {
-            const isCompleted = currentStep > step.id;
-            const isCurrent = currentStep === step.id;
-            const isUpcoming = currentStep < step.id;
+            const isCompleted = isFinished || currentStep > step.id;
+            const isCurrent = !isFinished && currentStep === step.id;
+            const isUpcoming = !isFinished && currentStep < step.id;
 
             return (
               <button

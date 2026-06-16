@@ -11,21 +11,23 @@ interface ProgramCardProps {
 }
 
 export function ProgramCard({ program }: ProgramCardProps) {
-  const confidenceColors = {
-    high: "bg-emerald-100 text-emerald-700",
-    medium: "bg-amber-100 text-amber-700",
-    low: "bg-gray-100 text-gray-700"
+  const confidenceConfig = {
+    high: { label: "Strong Match", color: "bg-emerald-100 text-emerald-700" },
+    medium: { label: "Possible Match", color: "bg-amber-100 text-amber-700" },
+    low: { label: "Worth Exploring", color: "bg-slate-100 text-slate-700" }
   };
 
+  const { label, color } = confidenceConfig[program.confidence];
+
   return (
-    <Card className="h-full flex flex-col border-emerald-100 hover:border-emerald-300 transition-colors">
+    <Card className="h-full flex flex-col border-emerald-100 hover:border-emerald-300 transition-colors shadow-sm">
       <CardHeader>
         <div className="flex justify-between items-start mb-2">
-          <Badge className={cn("capitalize font-semibold", confidenceColors[program.confidence])}>
-            {program.confidence} Confidence
+          <Badge className={cn("font-bold px-3 py-1 rounded-full border-none", color)}>
+            {label}
           </Badge>
         </div>
-        <CardTitle className="text-xl text-blue-900 leading-tight">{program.name}</CardTitle>
+        <CardTitle className="text-xl text-blue-900 leading-tight font-extrabold tracking-tight">{program.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 space-y-4">
         <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
