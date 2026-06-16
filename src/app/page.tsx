@@ -468,47 +468,60 @@ export default function LifeLineApp() {
         </div>
       </div>
 
-      <StepNavigation onBack={prevStep} isLast nextLabel="Finish" />
+      {!isFinished && <StepNavigation onBack={prevStep} isLast nextLabel="Finish" />}
     </div>
   );
 
   const renderContent = () => {
     if (isFinished) {
       return (
-        <div className="max-w-2xl mx-auto py-20 text-center space-y-8 animate-in fade-in zoom-in-95 duration-700">
-          <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-100/50">
-            <Sparkles className="w-12 h-12" />
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-5xl font-extrabold text-blue-900 tracking-tight leading-none">Recovery Journey Complete</h2>
-            <p className="text-xl text-gray-600 leading-relaxed max-w-lg mx-auto italic font-medium">
-              "You've taken important steps toward rebuilding stability. Recovery happens one decision at a time."
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-            <Button 
-              onClick={() => {
-                setIsFinished(false);
-                setCurrentStep(1);
-                setInitialInput("");
-                setAssessmentStep(0);
-                setAssessmentAnswers({});
-                setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
-              }}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-16 px-10 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200"
-            >
-              Start a New Recovery Journey
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => {
-                setIsFinished(false);
-                setCurrentStep(1);
-              }}
-              className="w-full sm:w-auto h-16 px-10 rounded-2xl font-bold text-lg border-2"
-            >
-              Return to Home
-            </Button>
+        <div className="space-y-16 animate-in fade-in duration-1000">
+          {renderInsights()}
+          
+          <div className="bg-white rounded-[3rem] p-10 md:p-16 text-center border border-blue-50 shadow-[0_30px_60px_rgba(37,99,235,0.06)] space-y-10 animate-in slide-in-from-bottom-12 duration-1000 delay-300">
+            <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-emerald-100/50">
+              <Sparkles className="w-12 h-12" />
+            </div>
+            <div className="space-y-4">
+              <h2 className="text-5xl font-extrabold text-blue-900 tracking-tight leading-none">Recovery Journey Complete</h2>
+              <div className="space-y-2">
+                <p className="text-xl text-gray-600 leading-relaxed max-w-lg mx-auto italic font-medium">
+                  "You've taken important steps toward rebuilding stability. Recovery happens one decision at a time."
+                </p>
+                <p className="text-blue-600 font-bold tracking-tight uppercase text-xs">
+                  Remember: seeking support is a sign of strength.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+              <Button 
+                onClick={() => {
+                  setIsFinished(false);
+                  setCurrentStep(1);
+                  setInitialInput("");
+                  setAssessmentStep(0);
+                  setAssessmentAnswers({});
+                  setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
+                }}
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-16 px-10 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all hover:-translate-y-1"
+              >
+                Start a New Recovery Journey
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setIsFinished(false);
+                  setCurrentStep(1);
+                  setInitialInput("");
+                  setAssessmentStep(0);
+                  setAssessmentAnswers({});
+                  setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
+                }}
+                className="w-full sm:w-auto h-16 px-10 rounded-2xl font-bold text-lg border-2 hover:bg-slate-50 transition-all"
+              >
+                Return Home
+              </Button>
+            </div>
           </div>
         </div>
       );
