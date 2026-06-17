@@ -58,7 +58,10 @@ export default function LifeLineApp() {
 
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  
+  const [recommendedPrograms, setRecommendedPrograms] = useState<any[]>([]);
 
   const progressPercentage = currentStep <= 1 ? 0 : 
                              currentStep === 2 ? 25 :
@@ -66,11 +69,31 @@ export default function LifeLineApp() {
                              currentStep === 4 ? 70 :
                              currentStep === 5 ? 85 : 100;
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep === 6) {
       setIsFinished(true);
     } else {
-      setCurrentStep(prev => Math.min(prev + 1, 6));
+      const nextS = currentStep + 1;
+      
+      // Step 4: Program Guidance Integration
+      if (nextS === 4) {
+        setIsLoadingPrograms(true);
+        try {
+          const response = await fetch('http://localhost:5000/api/programs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ situation: initialInput, answers: assessmentAnswers }),
+          });
+          const data = await response.json();
+          setRecommendedPrograms(data.programs || []);
+        } catch (error) {
+          console.error("Programs API Error:", error);
+        } finally {
+          setIsLoadingPrograms(false);
+        }
+      }
+      
+      setCurrentStep(nextS);
     }
     setIsMobileSidebarOpen(false);
   };
@@ -412,11 +435,28 @@ export default function LifeLineApp() {
         <p className="text-gray-500">Based on your situation, these programs offer the best chance of support.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {mockPrograms.map((program) => (
-          <ProgramCard key={program.id} program={program} />
-        ))}
-      </div>
+      {isLoadingPrograms ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-64 bg-white rounded-3xl animate-pulse border border-slate-100" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {recommendedPrograms.map((program, idx) => (
+            <ProgramCard key={idx} program={{
+              id: `api-${idx}`,
+              name: program.name,
+              description: program.reason,
+              recommendationReason: program.reason,
+              requirements: program.documents,
+              confidence: program.match.toLowerCase().includes('strong') ? 'high' : 
+                          program.match.toLowerCase().includes('possible') ? 'medium' : 'low',
+              link: '#'
+            }} />
+          ))}
+        </div>
+      )}
 
       <div className="bg-slate-100 p-4 rounded-xl text-center">
         <p className="text-xs text-slate-500 font-medium italic">
