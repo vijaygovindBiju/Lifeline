@@ -46,7 +46,7 @@ app.post('/api/assess', async (req: Request, res: Response) => {
     }`;
 
     const assessmentModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -112,7 +112,7 @@ app.post('/api/programs', async (req: Request, res: Response) => {
     }`;
 
     const programModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -179,7 +179,7 @@ app.post('/api/recovery-plan', async (req: Request, res: Response) => {
     }`;
 
     const planModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -241,7 +241,7 @@ app.post('/api/document-insights', async (req: Request, res: Response) => {
     }`;
 
     const insightsModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       generationConfig: { responseMimeType: "application/json" }
     });
 

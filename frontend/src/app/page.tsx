@@ -31,7 +31,8 @@ import {
   Bot,
   ChevronRight,
   Menu,
-  X
+  X,
+  SendHorizontal
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getGeminiResponse } from '@/lib/gemini';
@@ -66,6 +67,18 @@ export default function LifeLineApp() {
   const [recommendedPrograms, setRecommendedPrograms] = useState<any[]>([]);
   const [recoveryPlan, setRecoveryPlan] = useState<any>({ today: [], thisWeek: [], thisMonth: [] });
   const [docInsights, setDocInsights] = useState<any>(null);
+  const [chatInput, setChatInput] = useState("");
+  const chatScrollRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+    if (currentStep === 2 && !isTyping) {
+      inputRef.current?.focus();
+    }
+  }, [chatHistory, isTyping, currentStep]);
 
   const progressPercentage = currentStep <= 1 ? 0 : 
                              currentStep === 2 ? 25 :
@@ -170,6 +183,9 @@ export default function LifeLineApp() {
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const handleAssessmentAnswer = async (answer: string) => {
+    if (!answer.trim()) return;
+    setChatInput("");
+    
     const questions = dynamicQuestions.length > 0 ? dynamicQuestions : [
       "Have you eaten today?",
       "Do you have a safe place to stay tonight?",
@@ -188,9 +204,9 @@ export default function LifeLineApp() {
 
     // Determine fallback key based on the step and answer
     let fallbackKey = "generic";
-    if (assessmentStep === 0) fallbackKey = answer === "Yes" ? "food_yes" : "food_no";
-    else if (assessmentStep === 1) fallbackKey = answer === "Yes" ? "housing_yes" : "housing_no";
-    else if (assessmentStep === 2) fallbackKey = answer === "Yes" ? "dependents_yes" : "dependents_no";
+    if (assessmentStep === 0) fallbackKey = answer.toLowerCase().includes("yes") ? "food_yes" : "food_no";
+    else if (assessmentStep === 1) fallbackKey = answer.toLowerCase().includes("yes") ? "housing_yes" : "housing_no";
+    else if (assessmentStep === 2) fallbackKey = answer.toLowerCase().includes("yes") ? "dependents_yes" : "dependents_no";
     
     const prompt = `The user answered "${answer}" to the question "${currentQuestion}". 
     ${assessmentStep < 2 
@@ -338,7 +354,7 @@ export default function LifeLineApp() {
 
   // Screen 2: Crisis Assessment
   const renderAssessment = () => {
-    const questions = [
+    const questions = dynamicQuestions.length > 0 ? dynamicQuestions : [
       "Have you eaten today?",
       "Do you have a safe place to stay tonight?",
       "Do you have any dependents?"
@@ -363,7 +379,7 @@ export default function LifeLineApp() {
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-8 space-y-2 scroll-smooth">
+            <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-8 space-y-2 scroll-smooth">
               <ChatBubble role="user" content={initialInput} />
               {chatHistory.map((msg, i) => (
                 <ChatBubble key={i} role={msg.role as any} content={msg.content} />
@@ -384,26 +400,45 @@ export default function LifeLineApp() {
               )}
             </div>
 
-            <div className="p-8 border-t border-slate-50 bg-slate-50/50">
-              {assessmentStep < 3 && !isTyping && assessmentAnswers[questions[assessmentStep]] === undefined && (
-                <div className="flex flex-col gap-4 animate-in slide-in-from-bottom-4 duration-500">
-                  <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Select your answer</p>
-                  <div className="flex gap-4 max-w-sm mx-auto w-full">
-                    <Button 
-                      onClick={() => handleAssessmentAnswer("Yes")}
-                      className="flex-1 h-14 bg-white text-blue-600 border-2 border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600 rounded-2xl shadow-sm transition-all text-lg font-bold"
+            <div className="p-6 border-t border-slate-50 bg-slate-50/50 space-y-4">
+              {assessmentStep < 3 && !isTyping && (
+                <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  {["Yes", "No", "Not Sure"].map((choice) => (
+                    <button
+                      key={choice}
+                      onClick={() => handleAssessmentAnswer(choice)}
+                      className="px-6 py-2 rounded-full bg-white text-blue-600 border border-blue-100 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all text-sm font-bold shadow-sm"
                     >
-                      Yes
-                    </Button>
-                    <Button 
-                      onClick={() => handleAssessmentAnswer("No")}
-                      className="flex-1 h-14 bg-white text-slate-600 border-2 border-slate-100 hover:bg-slate-800 hover:text-white hover:border-slate-800 rounded-2xl shadow-sm transition-all text-lg font-bold"
-                    >
-                      No
-                    </Button>
-                  </div>
+                      {choice}
+                    </button>
+                  ))}
                 </div>
               )}
+              
+              <div className="relative group">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  placeholder={isTyping ? "Assistant is typing..." : "Type your response..."}
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isTyping) {
+                      handleAssessmentAnswer(chatInput);
+                    }
+                  }}
+                  disabled={isTyping}
+                  className="w-full h-14 pl-6 pr-14 rounded-2xl border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white shadow-sm text-[15px] font-medium placeholder:text-slate-400 disabled:opacity-50 disabled:bg-slate-50"
+                />
+                <Button
+                  size="icon"
+                  disabled={!chatInput.trim() || isTyping}
+                  onClick={() => handleAssessmentAnswer(chatInput)}
+                  className="absolute right-2 top-2 h-10 w-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 transition-all active:scale-95 disabled:bg-slate-200 disabled:shadow-none"
+                >
+                  <SendHorizontal className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
