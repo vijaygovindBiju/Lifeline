@@ -59,9 +59,11 @@ export default function LifeLineApp() {
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
+  const [isLoadingPlan, setIsLoadingPlan] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   const [recommendedPrograms, setRecommendedPrograms] = useState<any[]>([]);
+  const [recoveryPlan, setRecoveryPlan] = useState<any>({ today: [], thisWeek: [], thisMonth: [] });
 
   const progressPercentage = currentStep <= 1 ? 0 : 
                              currentStep === 2 ? 25 :
@@ -90,6 +92,24 @@ export default function LifeLineApp() {
           console.error("Programs API Error:", error);
         } finally {
           setIsLoadingPrograms(false);
+        }
+      }
+
+      // Step 5: Recovery Plan Integration
+      if (nextS === 5) {
+        setIsLoadingPlan(true);
+        try {
+          const response = await fetch('http://localhost:5000/api/recovery-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ situation: initialInput }),
+          });
+          const data = await response.json();
+          setRecoveryPlan(data);
+        } catch (error) {
+          console.error("Plan API Error:", error);
+        } finally {
+          setIsLoadingPlan(false);
         }
       }
       
@@ -479,11 +499,19 @@ export default function LifeLineApp() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <RecoveryChecklist timeframe="today" title="Today" steps={mockRecoveryPlan} />
-        <RecoveryChecklist timeframe="week" title="This Week" steps={mockRecoveryPlan} />
-        <RecoveryChecklist timeframe="month" title="This Month" steps={mockRecoveryPlan} />
-      </div>
+      {isLoadingPlan ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-96 bg-white rounded-3xl animate-pulse border border-slate-100" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <RecoveryChecklist timeframe="today" title="Today" steps={recoveryPlan.today.map((s: any, i: number) => ({ ...s, id: `today-${i}`, completed: false }))} />
+          <RecoveryChecklist timeframe="week" title="This Week" steps={recoveryPlan.thisWeek.map((s: any, i: number) => ({ ...s, id: `week-${i}`, completed: false }))} />
+          <RecoveryChecklist timeframe="month" title="This Month" steps={recoveryPlan.thisMonth.map((s: any, i: number) => ({ ...s, id: `month-${i}`, completed: false }))} />
+        </div>
+      )}
 
       <div className="bg-blue-600 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-200">
         <div className="space-y-2 text-center md:text-left">
