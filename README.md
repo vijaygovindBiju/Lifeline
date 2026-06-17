@@ -28,17 +28,18 @@ Most government and non-profit benefit systems are overwhelming during a crisis.
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Components**: shadcn/ui
+- **State/UI**: React 19, shadcn/ui, Tailwind CSS 4
+- **Intelligence**: Google Generative AI SDK (Direct integration)
 - **Icons**: Lucide React
-- **Animations**: Framer Motion / Tailwind Animate
+- **Animations**: tw-animate-css
 
 ### Backend
 - **Server**: Node.js / Express
-- **Intelligence**: Google Gemini API (gemini-3-flash)
-- **Environment**: TypeScript, dotenv, CORS
+- **Language**: TypeScript 6
+- **Intelligence**: Google Gemini API (`gemini-3-flash`)
+- **Environment**: dotenv, CORS
 
 ---
 
@@ -48,26 +49,65 @@ Most government and non-profit benefit systems are overwhelming during a crisis.
 - Node.js (v18+)
 - A Google Gemini API Key ([Get one here](https://ai.google.dev/))
 
-### 2. Backend Setup
+### 2. Environment Setup
+Copy the example environment file and add your API key:
 ```bash
-cd backend
-npm install
-# Create a .env file and add your key:
-# PORT=5000
-# GEMINI_API_KEY=your_key_here
+cp .env.example .env
+# Also copy to frontend and backend if running separately:
+cp .env frontend/.env.local
+cp .env backend/.env
+```
+
+### 3. Unified Setup (Recommended)
+You can set up and run the entire project from the root directory:
+```bash
+# Install all dependencies (root, frontend, backend)
+npm run install-all
+
+# Start both frontend and backend in development mode
 npm run dev
 ```
 
-### 3. Frontend Setup
+### 4. Manual Setup
+If you prefer to run them separately:
+**Backend:**
+```bash
+cd backend
+npm install
+npm run dev
+```
+**Frontend:**
 ```bash
 cd frontend
 npm install
-# Create a .env.local file and add your key:
-# NEXT_PUBLIC_GEMINI_API_KEY=your_key_here
 npm run dev
 ```
 
 The application will be available at `http://localhost:3000`.
+
+---
+
+## 📂 Project Structure
+
+```text
+├── backend/            # Express server & Gemini integration
+│   └── src/            # API routes and AI logic
+├── frontend/           # Next.js application
+│   └── src/
+│       ├── app/        # Pages and layouts
+│       ├── components/ # UI and shared components
+│       └── data/       # Mock data and resource mappings
+├── scripts/            # Validation and utility scripts
+└── .env.example        # Template for environment variables
+```
+
+---
+
+## 🧪 Automation & Validation
+
+We include scripts to ensure the system is functioning correctly:
+- `node scripts/check_models.js`: Verifies your Gemini API key and model access.
+- `python scripts/final_validation.py`: Runs an end-to-end simulation of the AI assessment and API endpoints.
 
 ---
 
