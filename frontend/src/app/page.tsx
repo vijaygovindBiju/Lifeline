@@ -80,7 +80,7 @@ export default function LifeLineApp() {
     const prompt = `You are LifeLine AI, a compassionate caseworker. A user just shared: "${initialInput}". 
     Respond with deep empathy (1-2 sentences) and let them know you'll ask a few quick questions to prioritize their immediate safety and needs.`;
     
-    const response = await getGeminiResponse(prompt);
+    const response = await getGeminiResponse(prompt, "initial");
     setChatHistory([{ role: 'assistant', content: response }]);
     setIsTyping(false);
   };
@@ -103,6 +103,12 @@ export default function LifeLineApp() {
     ]);
 
     setIsTyping(true);
+
+    // Determine fallback key based on the step and answer
+    let fallbackKey = "generic";
+    if (assessmentStep === 0) fallbackKey = answer === "Yes" ? "food_yes" : "food_no";
+    else if (assessmentStep === 1) fallbackKey = answer === "Yes" ? "housing_yes" : "housing_no";
+    else if (assessmentStep === 2) fallbackKey = answer === "Yes" ? "dependents_yes" : "dependents_no";
     
     const prompt = `The user answered "${answer}" to the question "${currentQuestion}". 
     ${assessmentStep < 2 
@@ -110,7 +116,7 @@ export default function LifeLineApp() {
       : `Provide a final reassuring acknowledgement that you've gathered enough to find immediate help.`}
     Keep it conversational and brief (max 2 sentences).`;
 
-    const aiResponse = await getGeminiResponse(prompt);
+    const aiResponse = await getGeminiResponse(prompt, fallbackKey);
     
     setIsTyping(false);
     setChatHistory(prev => [
