@@ -51,6 +51,10 @@ export default function LifeLineApp() {
   const [assessmentStep, setAssessmentStep] = useState(0);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
   const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>([]);
+  
+  // AI Centralized State
+  const [urgentNeeds, setUrgentNeeds] = useState<string[]>([]);
+  const [dynamicQuestions, setDynamicQuestions] = useState<string[]>([]);
 
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -75,18 +79,34 @@ export default function LifeLineApp() {
     setCurrentStep(2);
     setIsTyping(true);
     
-    const prompt = `You are LifeLine AI, a compassionate caseworker. A user just shared: "${initialInput}". 
-    Respond with deep empathy (1-2 sentences) and let them know you'll ask a few quick questions to prioritize their immediate safety and needs.`;
-    
-    const response = await getGeminiResponse(prompt, "initial");
-    setChatHistory([{ role: 'assistant', content: response }]);
-    setIsTyping(false);
+    try {
+      const response = await fetch('http://localhost:5000/api/assess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ situation: initialInput }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.error) throw new Error(data.error);
+
+      setChatHistory([{ role: 'assistant', content: data.response }]);
+      setUrgentNeeds(data.urgentNeeds || []);
+      setDynamicQuestions(data.nextQuestions || []);
+    } catch (error) {
+      console.error("Assessment Error:", error);
+      // Fallback for demo safety
+      const fallbackMsg = "I'm so sorry you're going through this. Please know that you're not alone. I'll ask a few quick questions to prioritize your immediate safety and needs.";
+      setChatHistory([{ role: 'assistant', content: fallbackMsg }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
   const handleAssessmentAnswer = async (answer: string) => {
-    const questions = [
+    const questions = dynamicQuestions.length > 0 ? dynamicQuestions : [
       "Have you eaten today?",
       "Do you have a safe place to stay tonight?",
       "Do you have any dependents?"
