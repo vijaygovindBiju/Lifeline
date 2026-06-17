@@ -47,6 +47,8 @@ const journeySteps = [
   { id: 6, label: 'Document Insights' },
 ];
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000';
+
 export default function LifeLineApp() {
   const [currentStep, setCurrentStep] = useState(1);
   const [initialInput, setInitialInput] = useState("");
@@ -94,6 +96,7 @@ export default function LifeLineApp() {
   const [recoveryPlan, setRecoveryPlan] = useState<any>({ today: [], thisWeek: [], thisMonth: [] });
   const [docInsights, setDocInsights] = useState<any>(null);
   const [aiReasoning, setAiReasoning] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -122,16 +125,21 @@ export default function LifeLineApp() {
       // Step 4: Program Guidance Integration
       if (nextS === 4) {
         setIsLoadingPrograms(true);
+        setError(null);
         try {
-          const response = await fetch('http://localhost:5000/api/programs', {
+          const response = await fetch(`${API_BASE_URL}/api/programs`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ situation: caseState.currentSituation || initialInput, answers: assessmentAnswers }),
           });
           const data = await response.json();
+          if (data.error) {
+            setError(data.error);
+          }
           setRecommendedPrograms(data.programs || []);
         } catch (error) {
           console.error("Programs API Error:", error);
+          setError("LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.");
         } finally {
           setIsLoadingPrograms(false);
         }
@@ -140,16 +148,21 @@ export default function LifeLineApp() {
       // Step 5: Recovery Plan Integration
       if (nextS === 5) {
         setIsLoadingPlan(true);
+        setError(null);
         try {
-          const response = await fetch('http://localhost:5000/api/recovery-plan', {
+          const response = await fetch(`${API_BASE_URL}/api/recovery-plan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ situation: caseState.currentSituation || initialInput }),
           });
           const data = await response.json();
+          if (data.error) {
+            setError(data.error);
+          }
           setRecoveryPlan(data);
         } catch (error) {
           console.error("Plan API Error:", error);
+          setError("LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.");
         } finally {
           setIsLoadingPlan(false);
         }
@@ -162,18 +175,23 @@ export default function LifeLineApp() {
 
   const handleResumeUpload = async () => {
     setIsLoadingInsights(true);
+    setError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/document-insights', {
+      const response = await fetch(`${API_BASE_URL}/api/document-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resumeText: "John Doe. Skilled in customer service and leadership. 4 years retail experience." }),
       });
       const data = await response.json();
+      if (data.error) {
+        setError(data.error);
+      }
       setDocInsights(data);
       // Transition to insights screen
       setCurrentStep(6);
     } catch (error) {
       console.error("Insights API Error:", error);
+      setError("LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.");
     } finally {
       setIsLoadingInsights(false);
     }
@@ -201,10 +219,11 @@ export default function LifeLineApp() {
   const startJourney = async () => {
     setCurrentStep(2);
     setIsTyping(true);
+    setError(null);
     simulateReasoning();
     
     try {
-      const response = await fetch('http://localhost:5000/api/assess', {
+      const response = await fetch(`${API_BASE_URL}/api/assess`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -230,7 +249,7 @@ export default function LifeLineApp() {
         }));
       }
       
-      const combinedMsg = `${data.acknowledgment} ${data.response}`;
+      const combinedMsg = `${data.acknowledgment || ''} ${data.response || ''}`.trim();
       setChatHistory([{ role: 'assistant', content: combinedMsg }]);
       
       if (data.nextQuestions && data.nextQuestions.length > 0) {
@@ -240,8 +259,7 @@ export default function LifeLineApp() {
       }
     } catch (error) {
       console.error("Assessment Error:", error);
-      // Fallback for demo safety
-      const fallbackMsg = "I'm here to help you find your next step. Let's start with a few quick questions to prioritize your immediate safety and needs.";
+      const fallbackMsg = "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.";
       setChatHistory([{ role: 'assistant', content: fallbackMsg }]);
     } finally {
       setIsTyping(false);
@@ -253,15 +271,7 @@ export default function LifeLineApp() {
   const handleAssessmentAnswer = async (answer: string) => {
     if (!answer.trim()) return;
     setChatInput("");
-    
-    const questions = dynamicQuestions.length > 0 ? dynamicQuestions : [
-      "Have you eaten today?",
-      "Do you have a safe place to stay tonight?",
-      "Do you have any dependents?"
-    ];
-    
-    const currentQuestion = questions[assessmentStep];
-    setAssessmentAnswers(prev => ({ ...prev, [currentQuestion]: answer }));
+    setError(null);
     
     setChatHistory(prev => [
       ...prev,
@@ -271,7 +281,7 @@ export default function LifeLineApp() {
     simulateReasoning();
 
     try {
-      const response = await fetch('http://localhost:5000/api/assess', {
+      const response = await fetch(`${API_BASE_URL}/api/assess`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -296,14 +306,13 @@ export default function LifeLineApp() {
         }));
       }
       
-      const combinedMsg = `${data.acknowledgment} ${data.response}`;
+      const combinedMsg = `${data.acknowledgment || ''} ${data.response || ''}`.trim();
       setChatHistory(prev => [
         ...prev,
         { role: 'assistant', content: combinedMsg }
       ]);
 
       if (data.nextQuestions && data.nextQuestions.length > 0) {
-        setAssessmentStep(prev => prev + 1);
         setDynamicQuestions(data.nextQuestions);
       } else {
         setShowTransitionCTA(true);
@@ -311,16 +320,10 @@ export default function LifeLineApp() {
     } catch (error) {
       console.error("Assessment Answer Error:", error);
       setIsTyping(false);
-      // Fallback
       setChatHistory(prev => [
         ...prev,
-        { role: 'assistant', content: "Thank you. I've noted that information. Let's move forward." }
+        { role: 'assistant', content: "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment." }
       ]);
-      if (assessmentStep < 2) {
-        setAssessmentStep(prev => prev + 1);
-      } else {
-        setShowTransitionCTA(true);
-      }
     }
   };
 
@@ -449,11 +452,7 @@ export default function LifeLineApp() {
 
   // Screen 2: Crisis Assessment
   const renderAssessment = () => {
-    const questions = dynamicQuestions.length > 0 ? dynamicQuestions : [
-      "Have you eaten today?",
-      "Do you have a safe place to stay tonight?",
-      "Do you have any dependents?"
-    ];
+    const questions = dynamicQuestions;
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in fade-in slide-in-from-right-8 duration-700">
@@ -496,9 +495,9 @@ export default function LifeLineApp() {
             </div>
 
             <div className="p-6 border-t border-slate-50 bg-slate-50/50 space-y-4">
-              {assessmentStep < 3 && !isTyping && (
+              {dynamicQuestions.length > 0 && !isTyping && (
                 <div className="flex flex-wrap gap-2 justify-center animate-in fade-in slide-in-from-bottom-2 duration-500">
-                  {["Yes", "No", "Not Sure"].map((choice) => (
+                  {dynamicQuestions.map((choice) => (
                     <button
                       key={choice}
                       onClick={() => handleAssessmentAnswer(choice)}
@@ -879,6 +878,7 @@ export default function LifeLineApp() {
                   setInitialInput("");
                   setAssessmentStep(0);
                   setAssessmentAnswers({});
+                  setError(null);
                   setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
                 }}
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-16 px-10 rounded-2xl font-bold text-lg shadow-lg shadow-blue-200 transition-all hover:-translate-y-1"
@@ -893,6 +893,7 @@ export default function LifeLineApp() {
                   setInitialInput("");
                   setAssessmentStep(0);
                   setAssessmentAnswers({});
+                  setError(null);
                   setChatHistory([{ role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }]);
                 }}
                 className="w-full sm:w-auto h-16 px-10 rounded-2xl font-bold text-lg border-2 hover:bg-slate-50 transition-all"
@@ -987,6 +988,13 @@ export default function LifeLineApp() {
         
         <div className="flex-1 overflow-y-auto bg-slate-50/30">
           <div className="max-w-5xl mx-auto px-6 py-10">
+            {error && (
+              <Alert variant="destructive" className="mb-6 rounded-2xl animate-in slide-in-from-top-4 duration-300">
+                <AlertCircle className="h-4 h-4" />
+                <AlertTitle>Notice</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             {renderContent()}
           </div>
         </div>

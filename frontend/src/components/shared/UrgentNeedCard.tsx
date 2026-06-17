@@ -10,9 +10,9 @@ export function UrgentNeedCard() {
           <AlertCircle className="w-6 h-6 text-amber-600" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-xl font-bold text-amber-900">Food Security Needs Attention</h3>
+          <h3 className="text-xl font-bold text-amber-900">Immediate Priorities</h3>
           <p className="text-amber-800/80 leading-relaxed">
-            "You mentioned that you haven't eaten today. Let's focus on getting immediate support first."
+            Based on your shared situation, we've identified the following immediate resources to help you find stability.
           </p>
         </div>
       </CardContent>

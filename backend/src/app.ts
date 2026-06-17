@@ -3,7 +3,9 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
-dotenv.config();
+import path from 'path';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const app = express();
 
@@ -112,7 +114,7 @@ OUTPUT FORMAT:
     console.log("------------------------------------------");
 
     const assessmentModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-3-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -126,34 +128,25 @@ OUTPUT FORMAT:
       
       const parsed = JSON.parse(text);
 
-      console.log("--- DEBUG: PARSED ASSESSMENT DATA ---");
-      console.log(JSON.stringify(parsed.updatedCaseState?.assessmentData, null, 2));
+      console.log("--- DEBUG: GEMINI RESPONSE SUCCESS ---");
+      console.log("Acknowledgment:", parsed.acknowledgment);
+      console.log("Response:", parsed.response);
+      console.log("Next Questions:", parsed.nextQuestions);
+      console.log("Parsed Assessment Data:", JSON.stringify(parsed.updatedCaseState?.assessmentData, null, 2));
 
       res.json(parsed);
     } catch (apiError) {
+      console.log("--- DEBUG: FALLBACK ACTIVATED ---");
       console.error("Gemini API Error:", apiError);
       
-      // Dynamic Fallback
-      let dynamicResponse = "I've noted that. To better help you, could you tell me a bit more about your current situation or what you need most right now?";
-      if (userMessage?.toLowerCase().includes("food")) {
-        dynamicResponse = "I hear that you're concerned about food. That's a high priority. Are there others with you who also need assistance?";
-      } else if (userMessage?.toLowerCase().includes("housing") || userMessage?.toLowerCase().includes("staying")) {
-        dynamicResponse = "I've noted the concern regarding your housing. Do you have a safe place to stay for tonight?";
-      }
-
       res.json({
-        "acknowledgment": `I've received your message about: ${userMessage || 'your situation'}.`,
-        "reasoning": {
-          "primaryConcern": caseState?.primaryConcern || "ongoing assessment",
-          "riskLevel": caseState?.riskLevel || "medium",
-          "identifiedNeeds": caseState?.identifiedNeeds || [],
-          "missingInformation": ["further context"]
-        },
-        "response": dynamicResponse,
-        "nextQuestions": ["What is your biggest concern at this moment?"],
+        "acknowledgment": "",
+        "reasoning": null,
+        "response": "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.",
+        "nextQuestions": [],
         "updatedCaseState": {
           ...(caseState || {}),
-          "currentSituation": caseState?.currentSituation || userMessage,
+          "currentSituation": (caseState?.currentSituation || "") + " " + userMessage,
           "currentStep": 2,
           "assessmentData": caseState?.assessmentData || {}
         }
@@ -221,7 +214,7 @@ Based on the user's situation and their answers to follow-up questions, recommen
     }`;
 
     const programModel = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: process.env.GEMINI_MODEL || "gemini-3-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -234,22 +227,9 @@ Based on the user's situation and their answers to follow-up questions, recommen
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
       
-      // General fallbacks
-      res.json({
-        "programs": [
-          {
-            "name": "Local Community Assistance",
-            "match": "Strong Match",
-            "reason": "Based on your current needs, local community programs often provide the fastest path to immediate support.",
-            "documents": ["Photo ID", "Proof of address"]
-          },
-          {
-            "name": "Emergency Relief Services",
-            "match": "Possible Match",
-            "reason": "This can help bridge the gap while we explore more permanent program eligibility.",
-            "documents": ["Identification", "Statement of need"]
-          }
-        ]
+      res.status(503).json({ 
+        error: "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.",
+        programs: [] 
       });
     }
 
@@ -308,7 +288,7 @@ Create a practical and realistic recovery plan for a user in the following situa
     }`;
 
     const planModel = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash-preview",
+      model: process.env.GEMINI_MODEL || "gemini-3-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -320,19 +300,11 @@ Create a practical and realistic recovery plan for a user in the following situa
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      res.json({
-        "today": [
-          { "title": "Identify immediate resources", "description": "Focus on locating local centers that can provide same-day assistance." },
-          { "title": "Organize your documents", "description": "Keep your ID and any relevant letters in one place for easy access." }
-        ],
-        "thisWeek": [
-          { "title": "Contact support agencies", "description": "Reach out to the programs we identified to discuss your eligibility." },
-          { "title": "Create a simple budget", "description": "Map out your essential expenses for the coming days." }
-        ],
-        "thisMonth": [
-          { "title": "Follow up on applications", "description": "Keep track of your requests and provide any additional information needed." },
-          { "title": "Review your recovery milestones", "description": "Take a moment to acknowledge the steps you've taken toward stability." }
-        ]
+      res.status(503).json({ 
+        error: "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.",
+        today: [], 
+        thisWeek: [], 
+        thisMonth: [] 
       });
     }
 
@@ -390,7 +362,7 @@ Analyze the following resume text and extract key information to help the user f
     }`;
 
     const insightsModel = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash-preview",
+      model: process.env.GEMINI_MODEL || "gemini-3-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -402,11 +374,12 @@ Analyze the following resume text and extract key information to help the user f
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      res.json({
-        "skills": ["Communication", "Organization", "Problem Solving", "Adaptability"],
-        "experience": "Experienced professional with a background in providing high-quality service and operational support.",
-        "temporaryOpportunities": ["Service Associate", "Administrative Support", "Logistics Coordinator"],
-        "growthOpportunities": ["Professional Development Programs", "Management Training", "Specialized Certification Pathways"]
+      res.status(503).json({ 
+        error: "LifeLine is temporarily unable to generate guidance. Your information has been saved. Please try again in a moment.",
+        skills: [],
+        experience: "",
+        temporaryOpportunities: [],
+        growthOpportunities: []
       });
     }
 
