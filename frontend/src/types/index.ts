@@ -42,6 +42,15 @@ export interface DocumentInsight {
   };
 }
 
+export interface CaseState {
+  currentSituation: string;
+  primaryConcern: string;
+  riskLevel: UrgencyLevel;
+  identifiedNeeds: string[];
+  answeredQuestions: string[];
+  currentStep: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';

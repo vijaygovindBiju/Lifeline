@@ -53,10 +53,26 @@ export default function LifeLineApp() {
   const [assessmentStep, setAssessmentStep] = useState(0);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
   const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>([]);
+  const [caseState, setCaseState] = useState<any>({
+    currentSituation: "",
+    primaryConcern: "",
+    riskLevel: "medium",
+    identifiedNeeds: [],
+    answeredQuestions: [],
+    currentStep: 1
+  });
   
   // AI Centralized State
   const [urgentNeeds, setUrgentNeeds] = useState<string[]>([]);
   const [dynamicQuestions, setDynamicQuestions] = useState<string[]>([]);
+  const [reasoningSteps, setReasoningSteps] = useState([
+    { id: 1, label: "Understanding situation", status: "pending" },
+    { id: 2, label: "Identifying immediate needs", status: "pending" },
+    { id: 3, label: "Assessing risk level", status: "pending" },
+    { id: 4, label: "Prioritizing resources", status: "pending" },
+    { id: 5, label: "Preparing guidance", status: "pending" },
+  ]);
+  const [showTransitionCTA, setShowTransitionCTA] = useState(false);
 
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -101,7 +117,7 @@ export default function LifeLineApp() {
           const response = await fetch('http://localhost:5000/api/programs', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ situation: initialInput, answers: assessmentAnswers }),
+            body: JSON.stringify({ situation: caseState.currentSituation || initialInput, answers: assessmentAnswers }),
           });
           const data = await response.json();
           setRecommendedPrograms(data.programs || []);
@@ -119,7 +135,7 @@ export default function LifeLineApp() {
           const response = await fetch('http://localhost:5000/api/recovery-plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ situation: initialInput }),
+            body: JSON.stringify({ situation: caseState.currentSituation || initialInput }),
           });
           const data = await response.json();
           setRecoveryPlan(data);
@@ -154,15 +170,39 @@ export default function LifeLineApp() {
     }
   };
 
+  const simulateReasoning = async () => {
+    const steps = [
+      "Understanding situation",
+      "Identifying immediate needs",
+      "Assessing risk level",
+      "Prioritizing resources",
+      "Preparing guidance"
+    ];
+    
+    for (let i = 0; i < steps.length; i++) {
+      setReasoningSteps(prev => prev.map((step, idx) => ({
+        ...step,
+        status: idx < i ? "completed" : idx === i ? "active" : "pending"
+      })));
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
+    setReasoningSteps(prev => prev.map(step => ({ ...step, status: "completed" })));
+  };
+
   const startJourney = async () => {
     setCurrentStep(2);
     setIsTyping(true);
+    simulateReasoning();
     
     try {
       const response = await fetch('http://localhost:5000/api/assess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ situation: initialInput }),
+        body: JSON.stringify({ 
+          userMessage: initialInput,
+          history: [],
+          caseState: { ...caseState, currentSituation: initialInput }
+        }),
       });
       
       const data = await response.json();
@@ -170,6 +210,10 @@ export default function LifeLineApp() {
       if (data.error) throw new Error(data.error);
 
       setAiReasoning(data.reasoning);
+      if (data.updatedCaseState) {
+        setCaseState(data.updatedCaseState);
+      }
+      
       const combinedMsg = `${data.acknowledgment} ${data.response}`;
       setChatHistory([{ role: 'assistant', content: combinedMsg }]);
       setDynamicQuestions(data.nextQuestions || []);
@@ -202,18 +246,28 @@ export default function LifeLineApp() {
       ...prev,
       { role: 'user', content: answer }
     ]);
+    setIsTyping(true);
+    simulateReasoning();
 
     try {
       const response = await fetch('http://localhost:5000/api/assess', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ situation: `Question: ${currentQuestion}. Answer: ${answer}` }),
+        body: JSON.stringify({ 
+          userMessage: answer,
+          history: chatHistory.slice(-10),
+          caseState: caseState
+        }),
       });
       
       const data = await response.json();
       
       setIsTyping(false);
       setAiReasoning(data.reasoning);
+      if (data.updatedCaseState) {
+        setCaseState(data.updatedCaseState);
+      }
+      
       const combinedMsg = `${data.acknowledgment} ${data.response}`;
       setChatHistory(prev => [
         ...prev,
@@ -224,7 +278,7 @@ export default function LifeLineApp() {
         setAssessmentStep(prev => prev + 1);
         setDynamicQuestions(data.nextQuestions || []);
       } else {
-        setTimeout(nextStep, 2000);
+        setShowTransitionCTA(true);
       }
     } catch (error) {
       console.error("Assessment Answer Error:", error);
@@ -237,7 +291,7 @@ export default function LifeLineApp() {
       if (assessmentStep < 2) {
         setAssessmentStep(prev => prev + 1);
       } else {
-        setTimeout(nextStep, 2000);
+        setShowTransitionCTA(true);
       }
     }
   };
@@ -432,7 +486,7 @@ export default function LifeLineApp() {
                 <input
                   ref={inputRef}
                   type="text"
-                  placeholder={isTyping ? "Assistant is typing..." : "Type your response..."}
+                  placeholder={isTyping ? "LifeLine is preparing a response..." : "Type your response..."}
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -440,8 +494,7 @@ export default function LifeLineApp() {
                       handleAssessmentAnswer(chatInput);
                     }
                   }}
-                  disabled={isTyping}
-                  className="w-full h-14 pl-6 pr-14 rounded-2xl border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white shadow-sm text-[15px] font-medium placeholder:text-slate-400 disabled:opacity-50 disabled:bg-slate-50"
+                  className="w-full h-14 pl-6 pr-14 rounded-2xl border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all bg-white shadow-sm text-[15px] font-medium placeholder:text-slate-400 disabled:bg-slate-50"
                 />
                 <Button
                   size="icon"
@@ -452,43 +505,95 @@ export default function LifeLineApp() {
                   <SendHorizontal className="w-5 h-5" />
                 </Button>
               </div>
+              {isTyping && (
+                <p className="text-[10px] text-center text-blue-600 font-bold animate-pulse uppercase tracking-widest">
+                  Please wait while your caseworker reviews your situation...
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         <div className="space-y-6">
-          {aiReasoning && (
-            <Card className="rounded-[2rem] border-blue-100 bg-blue-50/30 p-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 shadow-sm">
-              <div className="flex items-center gap-2 text-blue-900 font-bold text-[10px] uppercase tracking-widest">
-                <Activity className="w-3.5 h-3.5 text-blue-600" />
-                Caseworker Reasoning
+          {(isTyping || aiReasoning) && (
+            <Card className="rounded-[2rem] border-blue-100 bg-blue-50/30 p-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 shadow-sm overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-slate-100 overflow-hidden">
+                {isTyping && <div className="h-full bg-blue-600 animate-progress origin-left" />}
               </div>
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Primary Concern</p>
-                  <p className="text-sm font-bold text-blue-900 capitalize">{aiReasoning.primaryConcern}</p>
+              
+              <div className="flex items-center gap-2 text-blue-900 font-bold text-[10px] uppercase tracking-widest">
+                <Activity className={cn("w-3.5 h-3.5 text-blue-600", isTyping && "animate-pulse")} />
+                {isTyping ? "AI Caseworker Reviewing Situation" : "Assessment Summary"}
+              </div>
+
+              {isTyping ? (
+                <div className="space-y-3 pt-2">
+                  {reasoningSteps.map((step) => (
+                    <div key={step.id} className="flex items-center gap-3 transition-all duration-300">
+                      <div className={cn(
+                        "w-2 h-2 rounded-full transition-all duration-500",
+                        step.status === 'completed' ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
+                        step.status === 'active' ? "bg-amber-500 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.5)]" : "bg-slate-200"
+                      )} />
+                      <span className={cn(
+                        "text-[11px] font-bold tracking-tight transition-colors duration-300",
+                        step.status === 'completed' ? "text-emerald-600" :
+                        step.status === 'active' ? "text-amber-600" : "text-slate-400"
+                      )}>
+                        {step.label}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Risk Assessment</p>
-                  <Badge className={cn(
-                    "font-bold px-2.5 py-0.5 rounded-full text-[10px] border-none shadow-none uppercase tracking-wider",
-                    aiReasoning.riskLevel === 'high' ? "bg-red-100 text-red-600" :
-                    aiReasoning.riskLevel === 'medium' ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"
-                  )}>
-                    {aiReasoning.riskLevel} Risk
-                  </Badge>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Identified Needs</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {aiReasoning.identifiedNeeds.map((need: string, i: number) => (
-                      <Badge key={i} variant="outline" className="text-[9px] py-0 px-2 font-bold bg-white border-slate-200 text-slate-500 rounded-md">
-                        {need}
-                      </Badge>
-                    ))}
+              ) : aiReasoning && (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Primary Concern</p>
+                    <p className="text-sm font-bold text-blue-900 capitalize">{aiReasoning.primaryConcern}</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Risk Assessment</p>
+                    <Badge className={cn(
+                      "font-bold px-2.5 py-0.5 rounded-full text-[10px] border-none shadow-none uppercase tracking-wider",
+                      aiReasoning.riskLevel === 'high' ? "bg-red-100 text-red-600" :
+                      aiReasoning.riskLevel === 'medium' ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"
+                    )}>
+                      {aiReasoning.riskLevel} Risk
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Identified Needs</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {aiReasoning.identifiedNeeds.map((need: string, i: number) => (
+                        <Badge key={i} variant="outline" className="text-[9px] py-0 px-2 font-bold bg-white border-slate-200 text-slate-500 rounded-md">
+                          {need}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              )}
+            </Card>
+          )}
+
+          {showTransitionCTA && !isTyping && (
+            <Card className="rounded-[2rem] border-none bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white space-y-6 shadow-xl shadow-blue-200 animate-in zoom-in-95 duration-500">
+              <div className="space-y-2">
+                <h4 className="text-xl font-bold tracking-tight">Assessment Complete</h4>
+                <p className="text-blue-100 text-sm leading-relaxed">
+                  I have gathered enough information to identify relevant resources and programs for your situation.
+                </p>
               </div>
+              <Button 
+                onClick={() => {
+                  setShowTransitionCTA(false);
+                  nextStep();
+                }}
+                className="w-full bg-white text-blue-700 hover:bg-blue-50 h-12 rounded-xl font-bold flex items-center justify-center gap-2 group"
+              >
+                Show Nearby Resources
+                <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Button>
             </Card>
           )}
 

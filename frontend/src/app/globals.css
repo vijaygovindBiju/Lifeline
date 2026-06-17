@@ -128,3 +128,12 @@
     @apply font-sans;
   }
 }
+
+@keyframes progress {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(1); }
+}
+
+.animate-progress {
+  animation: progress 3s ease-in-out forwards;
+}
