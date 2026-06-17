@@ -59,7 +59,16 @@ export default function LifeLineApp() {
     riskLevel: "medium",
     identifiedNeeds: [],
     answeredQuestions: [],
-    currentStep: 1
+    currentStep: 1,
+    assessmentData: {
+      employment: "",
+      foodSecurity: "",
+      housing: "",
+      dependents: "",
+      medical: "",
+      location: "",
+      transportation: ""
+    }
   });
   
   // AI Centralized State
@@ -211,12 +220,24 @@ export default function LifeLineApp() {
 
       setAiReasoning(data.reasoning);
       if (data.updatedCaseState) {
-        setCaseState(data.updatedCaseState);
+        setCaseState((prev: any) => ({
+          ...prev,
+          ...data.updatedCaseState,
+          assessmentData: {
+            ...prev.assessmentData,
+            ...data.updatedCaseState.assessmentData
+          }
+        }));
       }
       
       const combinedMsg = `${data.acknowledgment} ${data.response}`;
       setChatHistory([{ role: 'assistant', content: combinedMsg }]);
-      setDynamicQuestions(data.nextQuestions || []);
+      
+      if (data.nextQuestions && data.nextQuestions.length > 0) {
+        setDynamicQuestions(data.nextQuestions);
+      } else {
+        setShowTransitionCTA(true);
+      }
     } catch (error) {
       console.error("Assessment Error:", error);
       // Fallback for demo safety
@@ -265,7 +286,14 @@ export default function LifeLineApp() {
       setIsTyping(false);
       setAiReasoning(data.reasoning);
       if (data.updatedCaseState) {
-        setCaseState(data.updatedCaseState);
+        setCaseState((prev: any) => ({
+          ...prev,
+          ...data.updatedCaseState,
+          assessmentData: {
+            ...prev.assessmentData,
+            ...data.updatedCaseState.assessmentData
+          }
+        }));
       }
       
       const combinedMsg = `${data.acknowledgment} ${data.response}`;
@@ -274,9 +302,9 @@ export default function LifeLineApp() {
         { role: 'assistant', content: combinedMsg }
       ]);
 
-      if (assessmentStep < 2) {
+      if (data.nextQuestions && data.nextQuestions.length > 0) {
         setAssessmentStep(prev => prev + 1);
-        setDynamicQuestions(data.nextQuestions || []);
+        setDynamicQuestions(data.nextQuestions);
       } else {
         setShowTransitionCTA(true);
       }
@@ -571,6 +599,20 @@ export default function LifeLineApp() {
                       ))}
                     </div>
                   </div>
+                  {caseState.assessmentData && Object.values(caseState.assessmentData).some(v => !!v) && (
+                    <div className="space-y-2 pt-2 border-t border-blue-100/50">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Verified Facts</p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                        {Object.entries(caseState.assessmentData).map(([key, value]) => value ? (
+                          <div key={key} className="flex items-center gap-1.5">
+                            <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                            <span className="text-[9px] font-bold text-slate-500 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
+                            <span className="text-[9px] font-medium text-blue-900 truncate">{value as string}</span>
+                          </div>
+                        ) : null)}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>

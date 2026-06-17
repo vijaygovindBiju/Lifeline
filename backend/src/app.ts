@@ -22,6 +22,11 @@ app.post('/api/assess', async (req: Request, res: Response) => {
   try {
     const { userMessage, history, caseState } = req.body;
 
+    console.log("--- DEBUG: NEW ASSESSMENT REQUEST ---");
+    console.log("User Message:", userMessage);
+    console.log("Incoming Case State:", JSON.stringify(caseState, null, 2));
+    console.log("History Length:", history?.length || 0);
+
     if (!userMessage && !caseState?.currentSituation) {
       return res.status(400).json({ error: "Message or existing situation is required" });
     }
@@ -30,98 +35,84 @@ app.post('/api/assess', async (req: Request, res: Response) => {
 
 IMPORTANT:
 You are NOT responding to a single message.
-You are continuing an active case.
+You are continuing an active case. You must remember everything provided previously.
 
-You must remember and build upon:
-1. Previous conversation history
-2. Previously identified needs
-3. Previously answered questions
-4. Current risk assessment
-5. Current stage of the Recovery Journey
-
-Never restart the assessment unless the user starts a completely new conversation.
-
----
-CURRENT CASE STATE
-
-Current Situation:
-${caseState?.currentSituation || 'Not yet fully defined'}
-
-Primary Concern:
-${caseState?.primaryConcern || 'Initial assessment'}
-
-Risk Level:
-${caseState?.riskLevel || 'medium'}
-
-Identified Needs:
-${(caseState?.identifiedNeeds || []).join(', ') || 'None identified yet'}
-
-Previously Answered Questions:
-${(caseState?.answeredQuestions || []).join('\n') || 'None yet'}
-
-Recovery Journey Step:
-${caseState?.currentStep || '1'}
+REQUIRED BEHAVIOR:
+1. FACT EXTRACTION: Review the "NEW USER MESSAGE" and "CONVERSATION HISTORY" to extract facts for the Assessment Domains.
+2. MEMORY UPDATE: Update the "updatedCaseState.assessmentData" with these facts.
+3. GAP ANALYSIS: Check which Critical Domains are still "Unknown".
+4. NEXT STEP: If an urgent need (Food/Housing) is identified AND Location is known, IMMEDIATELY recommend "Show Nearby Resources".
+5. QUESTIONING: If more info is needed, ask ONLY ONE question about the most urgent UNKNOWN domain. 
+6. NO REPETITION: Never ask a question if you already have related info in the Assessment Domains or History.
 
 ---
-CONVERSATION HISTORY
+CRITICAL ASSESSMENT DOMAINS (DO NOT RE-ASK IF KNOWN):
+- Employment: ${caseState?.assessmentData?.employment || 'Unknown'}
+- Food Security: ${caseState?.assessmentData?.foodSecurity || 'Unknown'}
+- Housing Status: ${caseState?.assessmentData?.housing || 'Unknown'}
+- Dependents: ${caseState?.assessmentData?.dependents || 'Unknown'}
+- Medical Needs: ${caseState?.assessmentData?.medical || 'Unknown'}
+- Location: ${caseState?.assessmentData?.location || 'Unknown'}
+- Transportation: ${caseState?.assessmentData?.transportation || 'Unknown'}
+
+---
+CURRENT CASE STATE:
+Primary Concern: ${caseState?.primaryConcern || 'Initial assessment'}
+Risk Level: ${caseState?.riskLevel || 'medium'}
+Identified Needs: ${(caseState?.identifiedNeeds || []).join(', ') || 'None'}
+Previously Answered Questions: ${(caseState?.answeredQuestions || []).join(', ') || 'None'}
+
+---
+CONVERSATION HISTORY:
 ${(history || []).map((m: any) => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content}`).join('\n')}
 
 ---
-NEW USER MESSAGE
-${userMessage}
+NEW USER MESSAGE:
+"${userMessage}"
 
 ---
-REASONING PROCESS
-Before responding:
-1. Review the conversation history.
-2. Review the current case state.
-3. Determine what information is already known.
-4. Determine what information is still missing.
-5. Avoid asking questions that have already been answered.
-6. Continue the assessment naturally.
-7. Update the case understanding.
-8. Move the user toward recovery.
+RULES:
+* Keep responses under 100 words.
+* If the user says "I live alone", "I'm homeless", "I stay with friends", etc. -> Housing Status is KNOWN. Do not ask about it again.
+* If the user provides a ZIP code or City -> Location is KNOWN.
+* Return valid JSON only.
 
----
-RULES
-DO NOT:
-* Restart the conversation.
-* Say "I've received your message."
-* Repeat generic introductions.
-* Forget previously provided information.
-* Ask the same question twice.
-* Jump directly to recommendations if assessment is incomplete.
-
-DO:
-* Reference information already provided.
-* Continue naturally from the previous exchange.
-* Ask only the next most important question.
-* Act like a professional caseworker managing an ongoing case.
-
-OUTPUT FORMAT
-Return valid JSON only:
+OUTPUT FORMAT:
 {
-"acknowledgment": "",
+"acknowledgment": "Briefly acknowledge the new info",
 "reasoning": {
-"primaryConcern": "",
-"riskLevel": "low | medium | high",
-"identifiedNeeds": [],
-"missingInformation": []
+"primaryConcern": "Most urgent issue found",
+"riskLevel": "high | medium | low",
+"identifiedNeeds": ["Need 1", "Need 2"],
+"missingInformation": ["What is still Unknown"]
 },
-"response": "",
-"nextQuestions": [],
+"response": "Your compassionate caseworker response",
+"nextQuestions": ["Only one question about an UNKNOWN domain, or empty if moving to resources"],
 "updatedCaseState": {
-"currentSituation": "",
-"primaryConcern": "",
-"riskLevel": "low | medium | high",
-"identifiedNeeds": [],
-"answeredQuestions": [],
-"currentStep": 2
+"currentSituation": "Comprehensive summary of all known facts so far",
+"primaryConcern": "Most urgent issue",
+"riskLevel": "high | medium | low",
+"identifiedNeeds": ["Need 1", "Need 2"],
+"answeredQuestions": ["List of all questions answered so far"],
+"currentStep": 2,
+"assessmentData": {
+  "employment": "extracted or previous value",
+  "foodSecurity": "extracted or previous value",
+  "housing": "extracted or previous value",
+  "dependents": "extracted or previous value",
+  "medical": "extracted or previous value",
+  "location": "extracted or previous value",
+  "transportation": "extracted or previous value"
+}
 }
 }`;
 
+    console.log("--- DEBUG: FULL PROMPT SENT TO GEMINI ---");
+    console.log(prompt);
+    console.log("------------------------------------------");
+
     const assessmentModel = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -129,27 +120,42 @@ Return valid JSON only:
       const result = await assessmentModel.generateContent(prompt);
       const response = await result.response;
       const text = response.text();
+      
+      console.log("--- DEBUG: GEMINI RAW RESPONSE ---");
+      console.log(text);
+      
       const parsed = JSON.parse(text);
+
+      console.log("--- DEBUG: PARSED ASSESSMENT DATA ---");
+      console.log(JSON.stringify(parsed.updatedCaseState?.assessmentData, null, 2));
+
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
+      
+      // Dynamic Fallback
+      let dynamicResponse = "I've noted that. To better help you, could you tell me a bit more about your current situation or what you need most right now?";
+      if (userMessage?.toLowerCase().includes("food")) {
+        dynamicResponse = "I hear that you're concerned about food. That's a high priority. Are there others with you who also need assistance?";
+      } else if (userMessage?.toLowerCase().includes("housing") || userMessage?.toLowerCase().includes("staying")) {
+        dynamicResponse = "I've noted the concern regarding your housing. Do you have a safe place to stay for tonight?";
+      }
+
       res.json({
-        "acknowledgment": "I'm continuing to review your situation.",
+        "acknowledgment": `I've received your message about: ${userMessage || 'your situation'}.`,
         "reasoning": {
           "primaryConcern": caseState?.primaryConcern || "ongoing assessment",
           "riskLevel": caseState?.riskLevel || "medium",
           "identifiedNeeds": caseState?.identifiedNeeds || [],
           "missingInformation": ["further context"]
         },
-        "response": "I've noted that. To make sure we're covering everything, could you tell me more about your current housing situation?",
-        "nextQuestions": ["Do you have a safe place to stay tonight?"],
-        "updatedCaseState": caseState || {
-          "currentSituation": userMessage,
-          "primaryConcern": "initial assessment",
-          "riskLevel": "medium",
-          "identifiedNeeds": [],
-          "answeredQuestions": [],
-          "currentStep": 2
+        "response": dynamicResponse,
+        "nextQuestions": ["What is your biggest concern at this moment?"],
+        "updatedCaseState": {
+          ...(caseState || {}),
+          "currentSituation": caseState?.currentSituation || userMessage,
+          "currentStep": 2,
+          "assessmentData": caseState?.assessmentData || {}
         }
       });
     }
@@ -215,7 +221,7 @@ Based on the user's situation and their answers to follow-up questions, recommen
     }`;
 
     const programModel = genAI.getGenerativeModel({ 
-      model: "gemini-3-flash-preview",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 

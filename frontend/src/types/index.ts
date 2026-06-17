@@ -49,6 +49,15 @@ export interface CaseState {
   identifiedNeeds: string[];
   answeredQuestions: string[];
   currentStep: number;
+  assessmentData?: {
+    employment?: string;
+    foodSecurity?: string;
+    housing?: string;
+    dependents?: string;
+    medical?: string;
+    location?: string;
+    transportation?: string;
+  };
 }
 
 export interface ChatMessage {
