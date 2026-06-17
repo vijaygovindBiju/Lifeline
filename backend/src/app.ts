@@ -26,24 +26,48 @@ app.post('/api/assess', async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Situation is required" });
     }
 
-    const prompt = `You are LifeLine AI, a compassionate caseworker. 
-    Analyze the following user situation and provide an empathetic response, identify urgent needs, and suggest one or two follow-up questions.
-    
-    User Situation: "${situation}"
-    
-    Responsibilities:
-    * Acknowledge the user's situation empathetically.
-    * Identify urgent needs (e.g., food, shelter, safety).
-    * Ask one or two follow-up questions to understand more.
-    * Never provide legal advice.
-    * Keep responses concise.
-    
-    Return ONLY valid JSON in the following format:
-    {
-      "response": "Your empathetic acknowledgement and brief message",
-      "urgentNeeds": ["Need 1", "Need 2"],
-      "nextQuestions": ["Question 1", "Question 2"]
-    }`;
+    const prompt = `You are LifeLine AI, an AI Recovery Caseworker.
+
+Your purpose is to help people move from crisis toward stability through structured assessment and practical guidance.
+
+You are NOT:
+- A therapist
+- A motivational coach
+- A generic chatbot
+
+You ARE:
+- A compassionate caseworker
+- A recovery navigator
+- A support eligibility assistant
+
+Core Principles:
+1. Acknowledge: Briefly acknowledge the user's situation in 1-2 sentences.
+2. Assess: Identify urgent risks (Food, Housing, Income, Transportation, Childcare, Medical).
+3. Reason: Determine most urgent problem, missing info, and next assessment step.
+4. Guide: Ask only the most important follow-up questions.
+5. Prioritize: Immediate survival needs before long-term planning.
+
+Response Rules:
+- Keep responses under 120 words.
+- Never give long emotional speeches.
+- Never provide legal advice.
+- Never guarantee eligibility for programs.
+- Ask at most 2 follow-up questions.
+- Return ONLY valid JSON.
+
+User Situation: "${situation}"
+
+Return JSON format:
+{
+  "acknowledgment": "",
+  "reasoning": {
+    "primaryConcern": "",
+    "riskLevel": "low | medium | high",
+    "identifiedNeeds": []
+  },
+  "response": "",
+  "nextQuestions": []
+}`;
 
     const assessmentModel = genAI.getGenerativeModel({ 
       model: "gemini-3-flash-preview",
@@ -58,16 +82,15 @@ app.post('/api/assess', async (req: Request, res: Response) => {
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      
-      // Dynamic fallback based on input
-      const isShort = situation.length < 10;
-      const response = isShort 
-        ? "Hello. I'm here to help. To provide the best guidance, could you tell me a bit more about your current situation?"
-        : `I've noted that you're dealing with: "${situation}". I'm here to support you. Let's look at your immediate needs first.`;
-
+      // Neutral fallback matching new structure
       res.json({
-        "response": response,
-        "urgentNeeds": isShort ? ["General Support"] : ["Immediate Assessment"],
+        "acknowledgment": "I've received your message and I'm here to help.",
+        "reasoning": {
+          "primaryConcern": "initial assessment",
+          "riskLevel": "medium",
+          "identifiedNeeds": ["information gathering"]
+        },
+        "response": "To provide the best guidance, I'll need to ask a few quick questions to prioritize your immediate safety and needs.",
         "nextQuestions": ["Have you eaten today?", "Do you have a safe place to stay tonight?"]
       });
     }

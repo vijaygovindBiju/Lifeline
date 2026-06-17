@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { cn } from '@/lib/utils';
 import { ProgressTracker } from '@/components/shared/ProgressTracker';
 import { StepNavigation } from '@/components/shared/StepNavigation';
 import { ChatBubble } from '@/components/shared/ChatBubble';
@@ -67,6 +68,7 @@ export default function LifeLineApp() {
   const [recommendedPrograms, setRecommendedPrograms] = useState<any[]>([]);
   const [recoveryPlan, setRecoveryPlan] = useState<any>({ today: [], thisWeek: [], thisMonth: [] });
   const [docInsights, setDocInsights] = useState<any>(null);
+  const [aiReasoning, setAiReasoning] = useState<any>(null);
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -167,8 +169,9 @@ export default function LifeLineApp() {
       
       if (data.error) throw new Error(data.error);
 
-      setChatHistory([{ role: 'assistant', content: data.response }]);
-      setUrgentNeeds(data.urgentNeeds || []);
+      setAiReasoning(data.reasoning);
+      const combinedMsg = `${data.acknowledgment} ${data.response}`;
+      setChatHistory([{ role: 'assistant', content: combinedMsg }]);
       setDynamicQuestions(data.nextQuestions || []);
     } catch (error) {
       console.error("Assessment Error:", error);
@@ -200,32 +203,42 @@ export default function LifeLineApp() {
       { role: 'user', content: answer }
     ]);
 
-    setIsTyping(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/assess', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ situation: `Question: ${currentQuestion}. Answer: ${answer}` }),
+      });
+      
+      const data = await response.json();
+      
+      setIsTyping(false);
+      setAiReasoning(data.reasoning);
+      const combinedMsg = `${data.acknowledgment} ${data.response}`;
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: combinedMsg }
+      ]);
 
-    // Determine fallback key based on the step and answer
-    let fallbackKey = "generic";
-    if (assessmentStep === 0) fallbackKey = answer.toLowerCase().includes("yes") ? "food_yes" : "food_no";
-    else if (assessmentStep === 1) fallbackKey = answer.toLowerCase().includes("yes") ? "housing_yes" : "housing_no";
-    else if (assessmentStep === 2) fallbackKey = answer.toLowerCase().includes("yes") ? "dependents_yes" : "dependents_no";
-    
-    const prompt = `The user answered "${answer}" to the question "${currentQuestion}". 
-    ${assessmentStep < 2 
-      ? `Briefly acknowledge and move to the next question: "${questions[assessmentStep + 1]}".` 
-      : `Provide a final reassuring acknowledgement that you've gathered enough to find immediate help.`}
-    Keep it conversational and brief (max 2 sentences).`;
-
-    const aiResponse = await getGeminiResponse(prompt, fallbackKey);
-    
-    setIsTyping(false);
-    setChatHistory(prev => [
-      ...prev,
-      { role: 'assistant', content: aiResponse }
-    ]);
-
-    if (assessmentStep < 2) {
-      setAssessmentStep(prev => prev + 1);
-    } else {
-      setTimeout(nextStep, 2000);
+      if (assessmentStep < 2) {
+        setAssessmentStep(prev => prev + 1);
+        setDynamicQuestions(data.nextQuestions || []);
+      } else {
+        setTimeout(nextStep, 2000);
+      }
+    } catch (error) {
+      console.error("Assessment Answer Error:", error);
+      setIsTyping(false);
+      // Fallback
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: "Thank you. I've noted that information. Let's move forward." }
+      ]);
+      if (assessmentStep < 2) {
+        setAssessmentStep(prev => prev + 1);
+      } else {
+        setTimeout(nextStep, 2000);
+      }
     }
   };
 
@@ -444,6 +457,41 @@ export default function LifeLineApp() {
         </div>
 
         <div className="space-y-6">
+          {aiReasoning && (
+            <Card className="rounded-[2rem] border-blue-100 bg-blue-50/30 p-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500 shadow-sm">
+              <div className="flex items-center gap-2 text-blue-900 font-bold text-[10px] uppercase tracking-widest">
+                <Activity className="w-3.5 h-3.5 text-blue-600" />
+                Caseworker Reasoning
+              </div>
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Primary Concern</p>
+                  <p className="text-sm font-bold text-blue-900 capitalize">{aiReasoning.primaryConcern}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Risk Assessment</p>
+                  <Badge className={cn(
+                    "font-bold px-2.5 py-0.5 rounded-full text-[10px] border-none shadow-none uppercase tracking-wider",
+                    aiReasoning.riskLevel === 'high' ? "bg-red-100 text-red-600" :
+                    aiReasoning.riskLevel === 'medium' ? "bg-amber-100 text-amber-600" : "bg-emerald-100 text-emerald-600"
+                  )}>
+                    {aiReasoning.riskLevel} Risk
+                  </Badge>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Identified Needs</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {aiReasoning.identifiedNeeds.map((need: string, i: number) => (
+                      <Badge key={i} variant="outline" className="text-[9px] py-0 px-2 font-bold bg-white border-slate-200 text-slate-500 rounded-md">
+                        {need}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-blue-200/40 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white overflow-hidden p-8 space-y-6">
             <div className="space-y-2">
               <h3 className="font-extrabold text-2xl tracking-tight">Urgency Assessment</h3>
