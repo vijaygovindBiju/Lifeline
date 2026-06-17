@@ -4,7 +4,7 @@ const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
 // We'll use gemini-1.5-flash as the primary, but provide a robust fallback
-export const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+export const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
 const fallbackResponses: Record<string, string> = {
   "initial": "I'm sorry you're going through this. Please know that you're not alone, and we're here to help you find your next step. Let's start with a few quick questions to prioritize your immediate needs.",

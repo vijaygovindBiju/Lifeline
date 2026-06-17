@@ -50,9 +50,7 @@ export default function LifeLineApp() {
   const [initialInput, setInitialInput] = useState("");
   const [assessmentStep, setAssessmentStep] = useState(0);
   const [assessmentAnswers, setAssessmentAnswers] = useState<Record<string, string>>({});
-  const [chatHistory, setChatHistory] = useState([
-    { role: 'assistant', content: "I'm sorry you're going through this. Before anything else, let's address your immediate needs." }
-  ]);
+  const [chatHistory, setChatHistory] = useState<{role: string, content: string}[]>([]);
 
   const [isFinished, setIsFinished] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
