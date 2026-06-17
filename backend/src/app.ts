@@ -58,10 +58,16 @@ app.post('/api/assess', async (req: Request, res: Response) => {
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      // Fallback for demo stability
+      
+      // Dynamic fallback based on input
+      const isShort = situation.length < 10;
+      const response = isShort 
+        ? "Hello. I'm here to help. To provide the best guidance, could you tell me a bit more about your current situation?"
+        : `I've noted that you're dealing with: "${situation}". I'm here to support you. Let's look at your immediate needs first.`;
+
       res.json({
-        "response": "I'm so sorry you're going through this. Losing a job is incredibly stressful, especially when it affects your ability to eat. We are here to help you through this day.",
-        "urgentNeeds": ["Immediate Food Assistance", "Job Loss Support"],
+        "response": response,
+        "urgentNeeds": isShort ? ["General Support"] : ["Immediate Assessment"],
         "nextQuestions": ["Have you eaten today?", "Do you have a safe place to stay tonight?"]
       });
     }
@@ -118,20 +124,21 @@ app.post('/api/programs', async (req: Request, res: Response) => {
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      // Fallback for demo stability
+      
+      // General fallbacks
       res.json({
         "programs": [
           {
-            "name": "SNAP (Supplemental Nutrition Assistance Program)",
+            "name": "Local Community Assistance",
             "match": "Strong Match",
-            "reason": "You shared that you've recently lost your job and are experiencing food insecurity, which may make this program relevant to your situation.",
-            "documents": ["Government ID", "Proof of residence", "Income statement"]
+            "reason": "Based on your current needs, local community programs often provide the fastest path to immediate support.",
+            "documents": ["Photo ID", "Proof of address"]
           },
           {
-            "name": "Unemployment Insurance Benefits",
-            "match": "Strong Match",
-            "reason": "Based on your recent job loss and employment history, this option may help provide temporary financial stability while you search for new opportunities.",
-            "documents": ["Termination letter", "Social Security Number", "Last pay stubs"]
+            "name": "Emergency Relief Services",
+            "match": "Possible Match",
+            "reason": "This can help bridge the gap while we explore more permanent program eligibility.",
+            "documents": ["Identification", "Statement of need"]
           }
         ]
       });
@@ -184,19 +191,18 @@ app.post('/api/recovery-plan', async (req: Request, res: Response) => {
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      // Fallback for demo stability
       res.json({
         "today": [
-          { "title": "Secure immediate food support", "description": "Visit a local food pantry or community kitchen to ensure you have meals for the next 24 hours." },
-          { "title": "Gather identification documents", "description": "Find your ID and any termination letters to prepare for program applications." }
+          { "title": "Identify immediate resources", "description": "Focus on locating local centers that can provide same-day assistance." },
+          { "title": "Organize your documents", "description": "Keep your ID and any relevant letters in one place for easy access." }
         ],
         "thisWeek": [
-          { "title": "Apply for unemployment benefits", "description": "Complete your initial application for temporary financial assistance." },
-          { "title": "Update your resume", "description": "Tailor your skills for immediate job opportunities in your area." }
+          { "title": "Contact support agencies", "description": "Reach out to the programs we identified to discuss your eligibility." },
+          { "title": "Create a simple budget", "description": "Map out your essential expenses for the coming days." }
         ],
         "thisMonth": [
-          { "title": "Establish a job search routine", "description": "Set aside time each day to apply for new roles and follow up with recruiters." },
-          { "title": "Stabilize your monthly budget", "description": "Review your essential expenses and prioritize payments to maintain stability." }
+          { "title": "Follow up on applications", "description": "Keep track of your requests and provide any additional information needed." },
+          { "title": "Review your recovery milestones", "description": "Take a moment to acknowledge the steps you've taken toward stability." }
         ]
       });
     }
@@ -247,12 +253,11 @@ app.post('/api/document-insights', async (req: Request, res: Response) => {
       res.json(parsed);
     } catch (apiError) {
       console.error("Gemini API Error:", apiError);
-      // Fallback for demo stability
       res.json({
-        "skills": ["Customer Service", "Sales", "Inventory Management", "Team Leadership"],
-        "experience": "4 years in retail operations and floor management.",
-        "temporaryOpportunities": ["Customer Support Representative", "Retail Associate", "Warehouse Specialist"],
-        "growthOpportunities": ["Workforce Training Program", "Retail Supervisor Track", "Operations Management"]
+        "skills": ["Communication", "Organization", "Problem Solving", "Adaptability"],
+        "experience": "Experienced professional with a background in providing high-quality service and operational support.",
+        "temporaryOpportunities": ["Service Associate", "Administrative Support", "Logistics Coordinator"],
+        "growthOpportunities": ["Professional Development Programs", "Management Training", "Specialized Certification Pathways"]
       });
     }
 

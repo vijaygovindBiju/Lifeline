@@ -160,7 +160,7 @@ export default function LifeLineApp() {
     } catch (error) {
       console.error("Assessment Error:", error);
       // Fallback for demo safety
-      const fallbackMsg = "I'm so sorry you're going through this. Please know that you're not alone. I'll ask a few quick questions to prioritize your immediate safety and needs.";
+      const fallbackMsg = "I'm here to help you find your next step. Let's start with a few quick questions to prioritize your immediate safety and needs.";
       setChatHistory([{ role: 'assistant', content: fallbackMsg }]);
     } finally {
       setIsTyping(false);

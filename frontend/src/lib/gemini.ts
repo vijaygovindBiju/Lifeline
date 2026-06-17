@@ -7,14 +7,14 @@ const genAI = new GoogleGenerativeAI(apiKey);
 export const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
 const fallbackResponses: Record<string, string> = {
-  "initial": "I'm sorry you're going through this. Please know that you're not alone, and we're here to help you find your next step. Let's start with a few quick questions to prioritize your immediate needs.",
-  "food_yes": "I'm glad to hear you've been able to eat today. Let's look at your housing situation next.",
-  "food_no": "I understand. That's our top priority right now. We'll make sure to find you food resources immediately. Do you have a safe place to stay tonight?",
-  "housing_yes": "That's good to know. Having a safe place is critical. One more question: do you have any dependents you're caring for?",
-  "housing_no": "I'm sorry to hear that. We'll prioritize finding emergency shelter options for you. Do you have any dependents with you?",
-  "dependents_yes": "Thank you for sharing that. Caring for others adds another layer of urgency. I've gathered what I need to start finding you immediate help.",
-  "dependents_no": "Thank you. I've gathered enough information to identify some immediate resources that can help you through today.",
-  "generic": "Thank you for sharing that. I'm processing your information to find the best support resources for your situation."
+  "initial": "I'm here to help you navigate this moment. Could you share a bit more about what's happening so I can provide the best guidance?",
+  "food_yes": "I've noted that. Let's look at your housing situation next to ensure you have a safe place to stay.",
+  "food_no": "Thank you for letting me know. We'll prioritize finding immediate support for that. Do you have a safe place to stay tonight?",
+  "housing_yes": "That's helpful to know. Stability in your living situation is a key first step. Do you have any dependents you're caring for?",
+  "housing_no": "I've noted the urgency regarding your housing. We'll look for emergency options. Do you have any dependents with you?",
+  "dependents_yes": "Thank you for sharing. Caring for others is an important factor in our planning. I've gathered enough to start identifying resources for you.",
+  "dependents_no": "Thank you. I have the information I need to begin matching you with relevant support resources.",
+  "generic": "Thank you for sharing that. I'm processing your information to find the best paths forward for your specific situation."
 };
 
 export async function getGeminiResponse(prompt: string, fallbackKey?: string) {
