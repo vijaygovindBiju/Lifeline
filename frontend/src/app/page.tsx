@@ -60,10 +60,12 @@ export default function LifeLineApp() {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoadingPrograms, setIsLoadingPrograms] = useState(false);
   const [isLoadingPlan, setIsLoadingPlan] = useState(false);
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   const [recommendedPrograms, setRecommendedPrograms] = useState<any[]>([]);
   const [recoveryPlan, setRecoveryPlan] = useState<any>({ today: [], thisWeek: [], thisMonth: [] });
+  const [docInsights, setDocInsights] = useState<any>(null);
 
   const progressPercentage = currentStep <= 1 ? 0 : 
                              currentStep === 2 ? 25 :
@@ -116,6 +118,25 @@ export default function LifeLineApp() {
       setCurrentStep(nextS);
     }
     setIsMobileSidebarOpen(false);
+  };
+
+  const handleResumeUpload = async () => {
+    setIsLoadingInsights(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/document-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resumeText: "John Doe. Skilled in customer service and leadership. 4 years retail experience." }),
+      });
+      const data = await response.json();
+      setDocInsights(data);
+      // Transition to insights screen
+      setCurrentStep(6);
+    } catch (error) {
+      console.error("Insights API Error:", error);
+    } finally {
+      setIsLoadingInsights(false);
+    }
   };
 
   const startJourney = async () => {
@@ -518,8 +539,12 @@ export default function LifeLineApp() {
           <h3 className="text-2xl font-bold">Upload Documents for Better Insights</h3>
           <p className="opacity-90">Upload your resume or letters to unlock tailored job opportunities.</p>
         </div>
-        <Button className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-2xl font-bold text-lg flex items-center gap-2">
-          <FileUp className="w-6 h-6" /> Upload Now
+        <Button 
+          onClick={handleResumeUpload}
+          disabled={isLoadingInsights}
+          className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-2xl font-bold text-lg flex items-center gap-2"
+        >
+          {isLoadingInsights ? "Analyzing..." : <><FileUp className="w-6 h-6" /> Upload Now</>}
         </Button>
       </div>
 
@@ -538,42 +563,58 @@ export default function LifeLineApp() {
         <p className="text-gray-500">We've analyzed your documents to find the best paths forward.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-6">
-          <DocumentInsightCard insight={mockDocumentInsight} />
-          <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
-             <p className="text-xs text-blue-700 font-medium leading-relaxed">
-              "These suggestions are based on the information you shared and are intended to support—not replace—your own judgment."
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-700">Immediate</Badge>
-              Temporary Opportunities
-            </h3>
-            <div className="grid gap-3">
-              {mockDocumentInsight.opportunities.temporary.map((opp, i) => (
-                <OpportunityCard key={i} title={opp} type="temporary" />
-              ))}
+      {docInsights ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <DocumentInsightCard insight={{
+              id: 'api-doc',
+              fileName: 'Extracted Resume Data',
+              skills: docInsights.skills,
+              experience: docInsights.experience,
+              opportunities: {
+                temporary: docInsights.temporaryOpportunities,
+                growth: docInsights.growthOpportunities
+              }
+            }} />
+            <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
+               <p className="text-xs text-blue-700 font-medium leading-relaxed">
+                "These suggestions are based on the information you shared and are intended to support—not replace—your own judgment."
+              </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
-              <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Future</Badge>
-              Growth Opportunities
-            </h3>
-            <div className="grid gap-3">
-              {mockDocumentInsight.opportunities.growth.map((opp, i) => (
-                <OpportunityCard key={i} title={opp} type="growth" />
-              ))}
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
+                <Badge variant="secondary" className="bg-blue-100 text-blue-700">Immediate</Badge>
+                Temporary Opportunities
+              </h3>
+              <div className="grid gap-3">
+                {docInsights.temporaryOpportunities.map((opp: any, i: number) => (
+                  <OpportunityCard key={i} title={opp} type="temporary" />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-xl font-bold text-blue-900 flex items-center gap-2">
+                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Future</Badge>
+                Growth Opportunities
+              </h3>
+              <div className="grid gap-3">
+                {docInsights.growthOpportunities.map((opp: any, i: number) => (
+                  <OpportunityCard key={i} title={opp} type="growth" />
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-slate-200">
+           <p className="text-slate-400 font-medium">Please upload a document on the previous screen to see insights.</p>
+           <Button variant="ghost" onClick={prevStep} className="mt-4 text-blue-600 font-bold">Go Back</Button>
+        </div>
+      )}
 
       {!isFinished && <StepNavigation onBack={prevStep} isLast nextLabel="Finish" />}
     </div>
