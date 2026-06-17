@@ -36,7 +36,6 @@ import {
   SendHorizontal
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getGeminiResponse } from '@/lib/gemini';
 
 const journeySteps = [
   { id: 1, label: 'Situation Shared' },
