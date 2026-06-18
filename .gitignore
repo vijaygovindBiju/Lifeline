@@ -21,6 +21,7 @@ dist/
 .env.test.local
 .env.production.local
 *.env
+*.log
 
 # Exceptions for example files
 !.env.example
