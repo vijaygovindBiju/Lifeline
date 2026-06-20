@@ -1,29 +1,31 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Briefcase } from 'lucide-react';
 
 interface SessionHeaderProps {
   sessionTitle: string;
   category: string;
-  progress: number;
+  progress?: number;
   className?: string;
 }
 
 export function SessionHeader({ sessionTitle, category, progress, className }: SessionHeaderProps) {
   return (
-    <div className={cn("w-full bg-white border-b border-slate-100 p-6 md:p-8 space-y-6", className)}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className={cn("w-full bg-white border-b border-slate-100 py-4 px-6 md:px-8", className)}>
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">{sessionTitle}</h1>
-          <div className="flex items-center gap-3 flex-wrap">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 py-1 px-3 flex items-center gap-2">
+          <h1 className="text-xl font-extrabold text-slate-800 tracking-tight">{sessionTitle}</h1>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200 py-0.5 px-2.5 flex items-center gap-1.5 text-xs">
               <Briefcase className="w-3.5 h-3.5" />
               {category}
             </Badge>
+            <Badge variant="secondary" className="bg-blue-50/50 text-blue-600 border-none font-bold px-2 py-0.5 rounded-full text-xs">
+              Guided Support
+            </Badge>
             {progress === 100 && (
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 py-1 px-3 font-bold">
+              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 py-0.5 px-2.5 text-xs font-bold">
                 Recovery Complete
               </Badge>
             )}
@@ -31,14 +33,6 @@ export function SessionHeader({ sessionTitle, category, progress, className }: S
               Your information helps us provide relevant guidance.
             </span>
           </div>
-        </div>
-
-        <div className="w-full md:w-64 space-y-2">
-          <div className="flex justify-between items-end">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Recovery Progress</p>
-            <p className="text-xl font-black text-blue-600">{progress === 100 ? "100% Complete" : `${progress}%`}</p>
-          </div>
-          <Progress value={progress} className="h-2.5 bg-slate-100" />
         </div>
       </div>
     </div>

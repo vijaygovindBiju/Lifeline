@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ResourceCard } from './ResourceCard';
 import { UrgentNeedCard } from './UrgentNeedCard';
-import { ArrowRight, Loader2, MapPinOff } from 'lucide-react';
+import { ArrowRight, Loader2, MapPinOff, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Resource } from '@/types';
 
@@ -116,8 +116,9 @@ export function ImmediateSupport({ onNext, onBack, location, identifiedNeeds }: 
       <UrgentNeedCard />
 
       {fallbackMessage && (
-        <div className="bg-amber-50 border-2 border-amber-100 text-amber-800 p-5 rounded-[2rem] text-sm font-semibold shadow-sm animate-in slide-in-from-top-2 duration-300">
-          ⚠️ {fallbackMessage}
+        <div className="bg-blue-50/60 border-2 border-blue-100/50 text-blue-800 p-5 rounded-[2rem] text-sm font-semibold shadow-sm flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+          <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <span>{fallbackMessage}</span>
         </div>
       )}
 

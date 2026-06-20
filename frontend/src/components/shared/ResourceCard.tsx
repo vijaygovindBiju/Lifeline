@@ -1,6 +1,6 @@
 import React from 'react';
-import { MapPin, Phone, Clock, Navigation, ExternalLink } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Phone, Clock, Navigation } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Resource } from '@/types';
@@ -14,50 +14,65 @@ interface ResourceCardProps {
 export function ResourceCard({ resource, isPriority }: ResourceCardProps) {
   return (
     <Card className={cn(
-      "h-full transition-all duration-300 hover:shadow-md",
-      isPriority && "border-amber-200 bg-amber-50/30 ring-1 ring-amber-100"
+      "h-full flex flex-col justify-between transition-all duration-300 hover:shadow-md border border-slate-100 p-3.5 space-y-3",
+      isPriority && "border-amber-200 bg-amber-50/20 ring-1 ring-amber-100 shadow-sm shadow-amber-50"
     )}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <Badge variant={isPriority ? "warning" : "secondary"} className="mb-2">
-            {resource.category || resource.type.toUpperCase()}
+      <div className="space-y-2">
+        <div className="flex justify-between items-start gap-1">
+          <Badge variant={isPriority ? "warning" : "secondary"} className="uppercase text-[8px] font-extrabold tracking-wider px-1.5 py-0.5">
+            {resource.category || resource.type || "Support"}
           </Badge>
-          <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
-            <Navigation className="w-3 h-3" /> {resource.distance}
+          <span className="text-[9px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0">
+            <Navigation className="w-2.5 h-2.5 text-blue-500" /> {resource.distance}
           </span>
         </div>
-        <CardTitle className="text-lg text-blue-900">{resource.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 pb-4">
-        <p className="text-sm text-gray-600 line-clamp-2">{resource.description}</p>
+        <div>
+          <h3 className="text-[14px] font-bold text-slate-800 leading-tight line-clamp-1">{resource.name}</h3>
+        </div>
+        <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{resource.description}</p>
         
-        <div className="space-y-2">
-          <div className="flex items-start gap-2 text-sm text-gray-600">
-            <MapPin className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-            <span>{resource.address}</span>
-          </div>
+        <div className="flex items-center gap-4 text-[11px] pt-1.5 border-t border-slate-50">
           {resource.phone && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Phone className="w-4 h-4 text-blue-500 shrink-0" />
-              <span>{resource.phone}</span>
+            <div className="flex items-center gap-1 text-slate-600">
+              <Phone className="w-3 h-3 text-blue-500" />
+              <span className="font-medium text-slate-700">{resource.phone}</span>
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className={cn("w-4 h-4 shrink-0", resource.openNow ? "text-emerald-500" : "text-gray-400")} />
-            <span className={resource.openNow ? "text-emerald-600 font-medium" : "text-gray-500"}>
-              {resource.statusText || (resource.openNow ? "Open Now" : "Closed")}
+          <div className="flex items-center gap-1">
+            <Clock className={cn("w-3 h-3", resource.openNow ? "text-emerald-500" : "text-amber-500")} />
+            <span className={cn("font-semibold text-[10px]", resource.openNow ? "text-emerald-600" : "text-amber-600")}>
+              {resource.openNow ? "Open" : "Closed"}
             </span>
           </div>
         </div>
-      </CardContent>
-      <CardFooter className="pt-0 flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1 text-xs">
-          View Details
+      </div>
+      
+      <div className="flex gap-1.5 w-full pt-2 border-t border-slate-50 mt-auto">
+        <Button variant="outline" size="sm" className="flex-1 text-[10px] h-7.5 px-1 font-bold hover:bg-slate-50">
+          Details
         </Button>
-        <Button size="sm" className="flex-1 text-xs bg-blue-600 hover:bg-blue-700">
-          Get Directions
+        {resource.phone ? (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 text-[10px] h-7.5 px-1 font-bold border-blue-100 text-blue-600 hover:bg-blue-50"
+            onClick={() => { window.location.href = `tel:${resource.phone}`; }}
+          >
+            Call
+          </Button>
+        ) : (
+          <Button variant="outline" size="sm" className="flex-1 text-[10px] h-7.5 px-1 font-bold opacity-45 cursor-not-allowed" disabled>
+            Call
+          </Button>
+        )}
+        <Button 
+          size="sm" 
+          className="flex-1 text-[10px] h-7.5 px-1 font-bold bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(resource.name + ' ' + resource.address)}`, '_blank', 'noopener,noreferrer'); }}
+        >
+          Directions
         </Button>
-      </CardFooter>
+      </div>
     </Card>
   );
 }
