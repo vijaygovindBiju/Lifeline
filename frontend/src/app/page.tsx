@@ -99,6 +99,8 @@ export default function LifeLineApp() {
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (chatScrollRef.current) {
@@ -172,14 +174,29 @@ export default function LifeLineApp() {
     setIsMobileSidebarOpen(false);
   };
 
-  const handleResumeUpload = async () => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        await uploadResumeText(text);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const uploadResumeText = async (text: string) => {
     setIsLoadingInsights(true);
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/api/document-insights`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeText: "John Doe. Skilled in customer service and leadership. 4 years retail experience." }),
+        body: JSON.stringify({ resumeText: text }),
       });
       const data = await response.json();
       if (data.error) {
@@ -194,6 +211,10 @@ export default function LifeLineApp() {
     } finally {
       setIsLoadingInsights(false);
     }
+  };
+
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
   };
 
   const simulateReasoning = async () => {
@@ -770,15 +791,30 @@ export default function LifeLineApp() {
       <div className="bg-blue-600 rounded-3xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-blue-200">
         <div className="space-y-2 text-center md:text-left">
           <h3 className="text-2xl font-bold">Upload Documents for Better Insights</h3>
-          <p className="opacity-90">Upload your resume or letters to unlock tailored job opportunities.</p>
+          {selectedFile ? (
+            <p className="opacity-95 font-medium flex items-center gap-2">
+              📄 Selected file: <span className="underline">{selectedFile.name}</span>
+            </p>
+          ) : (
+            <p className="opacity-90">Upload your resume or letters to unlock tailored job opportunities.</p>
+          )}
         </div>
-        <Button 
-          onClick={handleResumeUpload}
-          disabled={isLoadingInsights}
-          className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-2xl font-bold text-lg flex items-center gap-2"
-        >
-          {isLoadingInsights ? "Analyzing..." : <><FileUp className="w-6 h-6" /> Upload Now</>}
-        </Button>
+        <div className="flex items-center gap-4">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".txt" 
+            className="hidden" 
+          />
+          <Button 
+            onClick={triggerFileSelect}
+            disabled={isLoadingInsights}
+            className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-6 rounded-2xl font-bold text-lg flex items-center gap-2"
+          >
+            {isLoadingInsights ? "Analyzing..." : <><FileUp className="w-6 h-6" /> Upload Now</>}
+          </Button>
+        </div>
       </div>
 
       <StepNavigation onNext={nextStep} onBack={prevStep} nextLabel="View Document Insights" />
