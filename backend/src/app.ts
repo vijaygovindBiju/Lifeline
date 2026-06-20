@@ -54,6 +54,18 @@ REQUIRED BEHAVIOR:
 4. NEXT STEP: If an urgent need (Food/Housing) is identified AND Location is known, IMMEDIATELY recommend "Show Nearby Resources".
 5. QUESTIONING: If more info is needed, ask ONLY ONE question about the most urgent UNKNOWN domain. 
 6. NO REPETITION: Never ask a question if you already have related info in the Assessment Domains or History.
+7. CASE CLASSIFICATION: Dynamically determine the recovery category string ("category") for the case.
+   - The default category is "Crisis Assessment". Keep it as "Crisis Assessment" initially.
+   - Do NOT assume a specific crisis recovery category from a single brief symptom statement (e.g., if a user just says "I haven't eaten today", the category MUST remain "Crisis Assessment" until further detail is gathered).
+   - Only assign a specific recovery category after it has been explicitly confirmed by the user or confidently identified by the gathered evidence.
+   - Categorization Rules:
+     * Job loss confirmed (evidence/explicit statement of job loss) -> "Employment Recovery"
+     * Food insecurity confirmed (explicitly confirmed or clear ongoing food crisis, but NO job loss) -> "Food Security Recovery"
+     * Housing crisis confirmed (homelessness, eviction, unable to pay rent, but NO job loss) -> "Housing Stability Recovery"
+     * Medical emergency confirmed (severe health issues, medical bills, but NO job loss/housing/food crises) -> "Health Support Recovery"
+     * Multiple distinct crisis issues confirmed (e.g., food insecurity and medical needs both confirmed, and no job loss) -> "Crisis Recovery Plan"
+     * If the category is still unknown, continue displaying "Crisis Assessment".
+   - The system must never assume job loss without evidence.
 
 ---
 CRITICAL ASSESSMENT DOMAINS (DO NOT RE-ASK IF KNOWN):
@@ -69,6 +81,7 @@ CRITICAL ASSESSMENT DOMAINS (DO NOT RE-ASK IF KNOWN):
 CURRENT CASE STATE:
 Primary Concern: ${caseState?.primaryConcern || 'Initial assessment'}
 Risk Level: ${caseState?.riskLevel || 'medium'}
+Category: ${caseState?.category || 'Crisis Assessment'}
 Identified Needs: ${(caseState?.identifiedNeeds || []).join(', ') || 'None'}
 Previously Answered Questions: ${(caseState?.answeredQuestions || []).join(', ') || 'None'}
 
@@ -105,6 +118,7 @@ OUTPUT FORMAT:
 "identifiedNeeds": ["Need 1", "Need 2"],
 "answeredQuestions": ["List of all questions answered so far"],
 "currentStep": 2,
+"category": "Crisis Assessment | Food Security Recovery | Employment Recovery | Housing Stability Recovery | Health Support Recovery | Crisis Recovery Plan",
 "assessmentData": {
   "employment": "extracted or previous value",
   "foodSecurity": "extracted or previous value",
@@ -137,10 +151,27 @@ OUTPUT FORMAT:
       
       const parsed = JSON.parse(text);
 
+      // Post-process the category to ensure strict alignment with neutral starting states
+      if (parsed.updatedCaseState) {
+        const situation = (parsed.updatedCaseState.currentSituation || "").toLowerCase().trim();
+        const initialInputLow = (userMessage || "").toLowerCase().trim();
+        const location = (parsed.updatedCaseState.assessmentData?.location || "").toLowerCase();
+        
+        // Ensure "I haven't eaten today" or a single brief food symptom alone doesn't trigger recovery program assignment prematurely.
+        if (
+          parsed.updatedCaseState.category === "Food Security Recovery" &&
+          (situation.includes("haven't eaten") || initialInputLow.includes("haven't eaten")) &&
+          (!location || location === "unknown" || location === "")
+        ) {
+          parsed.updatedCaseState.category = "Crisis Assessment";
+        }
+      }
+
       console.log("--- DEBUG: GEMINI RESPONSE SUCCESS ---");
       console.log("Acknowledgment:", parsed.acknowledgment);
       console.log("Response:", parsed.response);
       console.log("Next Questions:", parsed.nextQuestions);
+      console.log("Parsed Category:", parsed.updatedCaseState?.category);
       console.log("Parsed Assessment Data:", JSON.stringify(parsed.updatedCaseState?.assessmentData, null, 2));
 
       res.json(parsed);
@@ -157,6 +188,7 @@ OUTPUT FORMAT:
           ...(caseState || {}),
           "currentSituation": (caseState?.currentSituation || "") + " " + userMessage,
           "currentStep": 2,
+          "category": caseState?.category || "Crisis Assessment",
           "assessmentData": caseState?.assessmentData || {}
         }
       });

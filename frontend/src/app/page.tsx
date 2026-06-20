@@ -61,6 +61,7 @@ export default function LifeLineApp() {
     identifiedNeeds: [],
     answeredQuestions: [],
     currentStep: 1,
+    category: "Crisis Assessment",
     assessmentData: {
       employment: "",
       foodSecurity: "",
@@ -262,6 +263,7 @@ export default function LifeLineApp() {
         setCaseState((prev: any) => ({
           ...prev,
           ...data.updatedCaseState,
+          category: data.updatedCaseState.category || prev.category || "Crisis Assessment",
           assessmentData: {
             ...prev.assessmentData,
             ...data.updatedCaseState.assessmentData
@@ -319,6 +321,7 @@ export default function LifeLineApp() {
         setCaseState((prev: any) => ({
           ...prev,
           ...data.updatedCaseState,
+          category: data.updatedCaseState.category || prev.category || "Crisis Assessment",
           assessmentData: {
             ...prev.assessmentData,
             ...data.updatedCaseState.assessmentData
@@ -1017,7 +1020,7 @@ export default function LifeLineApp() {
 
         <SessionHeader 
           sessionTitle="Current Recovery Session"
-          category="Job Loss Recovery"
+          category={caseState.category || "Crisis Assessment"}
           progress={progressPercentage}
         />
         <div className="px-8 mt-2 flex gap-2">
