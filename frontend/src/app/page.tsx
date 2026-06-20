@@ -693,7 +693,12 @@ export default function LifeLineApp() {
 
   // Screen 3: Immediate Support
   const renderSupport = () => (
-    <ImmediateSupport onNext={nextStep} onBack={prevStep} />
+    <ImmediateSupport 
+      onNext={nextStep} 
+      onBack={prevStep} 
+      location={caseState.assessmentData?.location || ""}
+      identifiedNeeds={caseState.identifiedNeeds || []}
+    />
   );
 
   // Screen 4: Programs That May Help
@@ -756,9 +761,9 @@ export default function LifeLineApp() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <RecoveryChecklist timeframe="today" title="Today" steps={recoveryPlan.today.map((s: any, i: number) => ({ ...s, id: `today-${i}`, completed: false }))} />
-          <RecoveryChecklist timeframe="week" title="This Week" steps={recoveryPlan.thisWeek.map((s: any, i: number) => ({ ...s, id: `week-${i}`, completed: false }))} />
-          <RecoveryChecklist timeframe="month" title="This Month" steps={recoveryPlan.thisMonth.map((s: any, i: number) => ({ ...s, id: `month-${i}`, completed: false }))} />
+          <RecoveryChecklist timeframe="today" title="Today" steps={(recoveryPlan.today || []).map((s: any, i: number) => ({ ...s, id: `today-${i}`, timeframe: 'today', completed: false }))} />
+          <RecoveryChecklist timeframe="week" title="This Week" steps={(recoveryPlan.thisWeek || []).map((s: any, i: number) => ({ ...s, id: `week-${i}`, timeframe: 'week', completed: false }))} />
+          <RecoveryChecklist timeframe="month" title="This Month" steps={(recoveryPlan.thisMonth || []).map((s: any, i: number) => ({ ...s, id: `month-${i}`, timeframe: 'month', completed: false }))} />
         </div>
       )}
 

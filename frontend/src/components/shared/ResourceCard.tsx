@@ -20,7 +20,7 @@ export function ResourceCard({ resource, isPriority }: ResourceCardProps) {
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <Badge variant={isPriority ? "warning" : "secondary"} className="mb-2">
-            {resource.type.toUpperCase()}
+            {resource.category || resource.type.toUpperCase()}
           </Badge>
           <span className="text-xs font-medium text-gray-500 flex items-center gap-1">
             <Navigation className="w-3 h-3" /> {resource.distance}

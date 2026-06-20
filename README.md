@@ -38,7 +38,7 @@ Most government and non-profit benefit systems are overwhelming during a crisis.
 ### Backend
 - **Server**: Node.js / Express
 - **Language**: TypeScript 6
-- **Intelligence**: Google Gemini API (`gemini-3-flash`)
+- **Intelligence**: Google Gemini API (`gemini-2.5-flash`)
 - **Environment**: dotenv, CORS
 
 ---

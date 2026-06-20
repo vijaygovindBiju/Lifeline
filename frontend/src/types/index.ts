@@ -11,6 +11,7 @@ export interface Resource {
   phone?: string;
   description: string;
   priority: UrgencyLevel;
+  category?: string;
 }
 
 export interface Program {
