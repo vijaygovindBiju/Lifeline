@@ -58,6 +58,8 @@ def run_full_suite():
         print(f"AI Response: {data1['response']}")
         print(f"AI Next Questions: {data1['nextQuestions']}")
         print(f"Extracted Facts: {json.dumps(data1['updatedCaseState']['assessmentData'], indent=2)}")
+        print(f"Category: {data1['updatedCaseState'].get('category')}")
+        print(f"Root Cause: {data1['updatedCaseState'].get('rootCause')}")
         
         # Update for Turn 2
         case_state = data1['updatedCaseState']
@@ -75,6 +77,8 @@ def run_full_suite():
         if data2:
             print(f"AI Response: {data2['response']}")
             print(f"Extracted Facts: {json.dumps(data2['updatedCaseState']['assessmentData'], indent=2)}")
+            print(f"Category: {data2['updatedCaseState'].get('category')}")
+            print(f"Root Cause: {data2['updatedCaseState'].get('rootCause')}")
             case_state = data2['updatedCaseState']
 
     # 3. Programs

@@ -151,19 +151,62 @@ OUTPUT FORMAT:
       
       const parsed = JSON.parse(text);
 
-      // Post-process the category to ensure strict alignment with neutral starting states
+      // Post-process the category to ensure strict alignment with neutral starting states and priority rules
       if (parsed.updatedCaseState) {
         const situation = (parsed.updatedCaseState.currentSituation || "").toLowerCase().trim();
         const initialInputLow = (userMessage || "").toLowerCase().trim();
-        const location = (parsed.updatedCaseState.assessmentData?.location || "").toLowerCase();
-        
-        // Ensure "I haven't eaten today" or a single brief food symptom alone doesn't trigger recovery program assignment prematurely.
-        if (
-          parsed.updatedCaseState.category === "Food Security Recovery" &&
-          (situation.includes("haven't eaten") || initialInputLow.includes("haven't eaten")) &&
-          (!location || location === "unknown" || location === "")
-        ) {
+        const data = parsed.updatedCaseState.assessmentData || {};
+        const location = (data.location || "").toLowerCase().trim();
+        const hasLocation = location && location !== "unknown" && location !== "";
+
+        const hasJobLoss = data.employment && data.employment !== "Unknown" && data.employment !== "";
+        const hasFoodCrisis = data.foodSecurity && data.foodSecurity !== "Unknown" && data.foodSecurity !== "";
+        const hasHousingCrisis = data.housing && data.housing !== "Unknown" && data.housing !== "";
+        const hasMedicalCrisis = data.medical && data.medical !== "Unknown" && data.medical !== "";
+        const hasTransportation = data.transportation && data.transportation !== "Unknown" && data.transportation !== "";
+
+        // Check for safety risk (riskLevel === 'high' or severe safety keywords)
+        const isHighRisk = (parsed.updatedCaseState.riskLevel || "").toLowerCase() === 'high';
+        const hasSevereKeywords = situation.includes("suicide") || 
+                                  situation.includes("harm") || 
+                                  situation.includes("abuse") || 
+                                  situation.includes("violence") || 
+                                  situation.includes("danger") ||
+                                  situation.includes("hurt") ||
+                                  initialInputLow.includes("suicide") || 
+                                  initialInputLow.includes("harm") || 
+                                  initialInputLow.includes("abuse") || 
+                                  initialInputLow.includes("violence") || 
+                                  initialInputLow.includes("danger") || 
+                                  initialInputLow.includes("hurt");
+        const hasSafetyRisk = isHighRisk || hasSevereKeywords;
+
+        let rootCause = parsed.updatedCaseState.rootCause || caseState?.rootCause || "";
+        if (hasJobLoss) {
+          rootCause = "Employment Loss";
+        }
+        parsed.updatedCaseState.rootCause = rootCause;
+
+        // Neutral starting state check: do not assign category if location is unknown
+        if (!hasLocation) {
           parsed.updatedCaseState.category = "Crisis Assessment";
+        } else {
+          // Priority Order: Immediate safety risk -> Food -> Housing -> Medical -> Transportation -> Employment
+          if (hasSafetyRisk) {
+            parsed.updatedCaseState.category = "Crisis Recovery Plan";
+          } else if (hasFoodCrisis) {
+            parsed.updatedCaseState.category = "Food Security Recovery";
+          } else if (hasHousingCrisis) {
+            parsed.updatedCaseState.category = "Housing Stability Recovery";
+          } else if (hasMedicalCrisis) {
+            parsed.updatedCaseState.category = "Medical Support Recovery";
+          } else if (hasTransportation) {
+            parsed.updatedCaseState.category = "Crisis Recovery Plan";
+          } else if (hasJobLoss) {
+            parsed.updatedCaseState.category = "Employment Recovery";
+          } else {
+            parsed.updatedCaseState.category = "Crisis Assessment";
+          }
         }
       }
 
@@ -183,50 +226,81 @@ OUTPUT FORMAT:
       const currentSituation = (caseState?.currentSituation || "") + " " + userMessage;
       
       const prevData = caseState?.assessmentData || {};
+      const isUnknown = (val: any) => !val || val === "Unknown" || val === "unknown" || val === "";
+      
       const assessmentData = {
-        employment: prevData.employment || (input.includes("job") || input.includes("unemployed") || input.includes("work") || input.includes("laid off") ? "Lost job" : "Unknown"),
-        foodSecurity: prevData.foodSecurity || (input.includes("food") || input.includes("eat") || input.includes("hungry") || input.includes("eaten") ? "Experiencing food insecurity" : "Unknown"),
-        housing: prevData.housing || (input.includes("rent") || input.includes("apartment") || input.includes("home") || input.includes("housing") ? "Housing instability" : "Unknown"),
-        dependents: prevData.dependents || "Unknown",
-        medical: prevData.medical || "Unknown",
-        location: prevData.location || (input.includes("kozhikode") ? "Kozhikode" : "Unknown"),
-        transportation: prevData.transportation || "Unknown"
+        employment: !isUnknown(prevData.employment) ? prevData.employment : (input.includes("job") || input.includes("unemployed") || input.includes("work") || input.includes("laid off") ? "Lost job" : "Unknown"),
+        foodSecurity: !isUnknown(prevData.foodSecurity) ? prevData.foodSecurity : (input.includes("food") || input.includes("eat") || input.includes("hungry") || input.includes("eaten") ? "Experiencing food insecurity" : "Unknown"),
+        housing: !isUnknown(prevData.housing) ? prevData.housing : (input.includes("rent") || input.includes("apartment") || input.includes("home") || input.includes("housing") ? "Housing instability" : "Unknown"),
+        dependents: !isUnknown(prevData.dependents) ? prevData.dependents : "Unknown",
+        medical: !isUnknown(prevData.medical) ? prevData.medical : "Unknown",
+        location: !isUnknown(prevData.location) ? prevData.location : (input.includes("kozhikode") ? "Kozhikode" : "Unknown"),
+        transportation: !isUnknown(prevData.transportation) ? prevData.transportation : "Unknown"
       };
 
       // Determine category based on confirmed details
       let category = caseState?.category || "Crisis Assessment";
+      let rootCause = caseState?.rootCause || "";
       const hasJobLoss = assessmentData.employment !== "Unknown" && assessmentData.employment !== "";
       const hasFoodCrisis = assessmentData.foodSecurity !== "Unknown" && assessmentData.foodSecurity !== "";
       const hasHousingCrisis = assessmentData.housing !== "Unknown" && assessmentData.housing !== "";
       const hasMedicalCrisis = assessmentData.medical !== "Unknown" && assessmentData.medical !== "";
+      const hasTransportation = assessmentData.transportation !== "Unknown" && assessmentData.transportation !== "";
+
+      const isHighRisk = (caseState?.riskLevel || "").toLowerCase() === 'high' || input.includes("emergency") || input.includes("danger");
+      const hasSevereKeywords = input.includes("suicide") || 
+                                input.includes("harm") || 
+                                input.includes("abuse") || 
+                                input.includes("violence") || 
+                                input.includes("hurt");
+      const hasSafetyRisk = isHighRisk || hasSevereKeywords;
 
       if (hasJobLoss) {
-        category = "Employment Recovery";
+        rootCause = "Employment Loss";
+      }
+
+      const hasLocation = assessmentData.location && assessmentData.location !== "Unknown" && assessmentData.location !== "";
+
+      if (!hasLocation) {
+        category = "Crisis Assessment";
       } else {
-        const activeCrises = [hasFoodCrisis, hasHousingCrisis, hasMedicalCrisis].filter(Boolean).length;
-        if (activeCrises > 1) {
+        // Priority Order: Immediate safety risk -> Food -> Housing -> Medical -> Transportation -> Employment
+        if (hasSafetyRisk) {
           category = "Crisis Recovery Plan";
-        } else if (hasFoodCrisis && assessmentData.location !== "Unknown") {
+        } else if (hasFoodCrisis) {
           category = "Food Security Recovery";
         } else if (hasHousingCrisis) {
           category = "Housing Stability Recovery";
         } else if (hasMedicalCrisis) {
           category = "Medical Support Recovery";
+        } else if (hasTransportation) {
+          category = "Crisis Recovery Plan";
+        } else if (hasJobLoss) {
+          category = "Employment Recovery";
+        } else {
+          category = "Crisis Assessment";
         }
       }
 
       res.json({
         "acknowledgment": "Thank you for sharing your situation.",
         "reasoning": {
-          "primaryConcern": assessmentData.foodSecurity !== "Unknown" ? "Food Insecurity" : "Crisis Recovery Needs",
-          "riskLevel": "high",
-          "identifiedNeeds": ["Food Assistance", "Housing Stability"],
+          "primaryConcern": hasSafetyRisk ? "Immediate Safety Risk" : (hasFoodCrisis ? "Food Insecurity" : (hasHousingCrisis ? "Housing Instability" : (hasMedicalCrisis ? "Medical Needs" : "Crisis Recovery Needs"))),
+          "riskLevel": hasSafetyRisk ? "high" : "medium",
+          "identifiedNeeds": [
+            ...(hasSafetyRisk ? ["Immediate Safety Support"] : []),
+            ...(hasFoodCrisis ? ["Food Assistance"] : []),
+            ...(hasHousingCrisis ? ["Housing Stability"] : []),
+            ...(hasMedicalCrisis ? ["Medical Support"] : []),
+            ...(hasTransportation ? ["Transportation Support"] : [])
+          ],
           "missingInformation": ["Location", "Dependents"],
           "whyRecommended": [
-            "Immediate food insecurity detected",
-            "User reported not eating today",
-            "No nearby food resources found",
-            "Alternative support services identified font-medium",
+            ...(hasSafetyRisk ? ["Immediate safety concern flagged"] : []),
+            ...(hasFoodCrisis ? ["Immediate food insecurity detected", "User reported not eating today"] : []),
+            ...(hasHousingCrisis ? ["Housing instability threat identified", "Unable to pay rent or secure housing"] : []),
+            ...(hasMedicalCrisis ? ["Medical concern flagged"] : []),
+            ...(hasTransportation ? ["Transportation barriers detected"] : []),
             assessmentData.employment === "Unknown" ? "Employment status not yet verified" : "Employment loss confirmed"
           ]
         },
@@ -241,6 +315,7 @@ OUTPUT FORMAT:
           "currentSituation": currentSituation.trim(),
           "currentStep": 2,
           "category": category,
+          "rootCause": rootCause,
           "assessmentData": assessmentData
         }
       });

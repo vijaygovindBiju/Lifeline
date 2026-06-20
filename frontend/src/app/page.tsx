@@ -64,6 +64,7 @@ export default function LifeLineApp() {
     answeredQuestions: [],
     currentStep: 1,
     category: "Crisis Assessment",
+    rootCause: "",
     assessmentData: {
       employment: "",
       foodSecurity: "",
@@ -655,6 +656,11 @@ export default function LifeLineApp() {
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Primary Concern</p>
                     <p className="text-xs font-bold text-blue-900 capitalize leading-tight">{aiReasoning.primaryConcern || "Under assessment"}</p>
+                    {caseState.rootCause && (
+                      <p className="text-[10px] text-slate-500 font-medium mt-1">
+                        Caused by: <span className="font-semibold text-slate-700">{caseState.rootCause}</span>
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-0.5">
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Risk Level</p>
