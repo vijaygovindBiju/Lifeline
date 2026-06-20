@@ -897,59 +897,194 @@ export default function LifeLineApp() {
 
   // Screen 6: Document Insights
   const renderInsights = () => (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500 max-w-4xl mx-auto pb-10">
       <div className="space-y-1">
         <h2 className="text-2xl font-bold text-blue-900 flex items-center gap-2.5">
           <Sparkles className="w-6 h-6 text-blue-500" />
-          Document Insights
+          Career Recovery Insights
         </h2>
-        <p className="text-gray-500 text-sm">We've analyzed your documents to find the best paths forward.</p>
+        <p className="text-gray-500 text-sm font-medium">We analyzed your documents and identified the strongest paths forward.</p>
       </div>
 
       {docInsights ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <DocumentInsightCard insight={{
-              id: 'api-doc',
-              fileName: 'Extracted Resume Data',
-              skills: docInsights.skills,
-              experience: docInsights.experience,
-              opportunities: {
-                temporary: docInsights.temporaryOpportunities,
-                growth: docInsights.growthOpportunities
-              }
-            }} />
-            <div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl">
-               <p className="text-[11px] text-blue-700 font-medium leading-relaxed">
-                "These suggestions are based on the information you shared and are intended to support—not replace—your own judgment."
-              </p>
+        <div className="space-y-6">
+          {/* SECTION 1 — INSIGHTS SUMMARY */}
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-6 md:p-8 shadow-sm space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Key Skills */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Key Skills</h4>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(docInsights.skills || []).map((skill: string, idx: number) => (
+                    <Badge key={idx} variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100 text-[10px] px-2.5 py-0.5 font-bold">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Relevant Experience */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Relevant Experience</h4>
+                <p className="text-xs text-slate-600 leading-relaxed font-semibold bg-slate-50 border border-slate-100 p-3 rounded-xl italic mt-1">
+                  "{docInsights.experience || "No experience summary available."}"
+                </p>
+              </div>
+
+              {/* Strength Areas */}
+              <div className="space-y-2">
+                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Strength Areas</h4>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(docInsights.strengthAreas || ["Mobile Architecture", "State Management", "Firebase Integration"]).map((area: string, idx: number) => (
+                    <Badge key={idx} variant="outline" className="text-[10px] px-2.5 py-0.5 font-bold text-slate-600 border-slate-200 bg-white">
+                      {area}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-5">
-            <div className="space-y-2.5">
-              <h3 className="text-sm font-bold text-blue-900 flex items-center gap-1.5 uppercase tracking-wide">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5">Immediate</Badge>
-                Temporary Opportunities
+          {/* SECTION 2 — WHY THESE OPPORTUNITIES MATCH YOU */}
+          <div className="bg-white rounded-[2rem] border border-slate-100 p-6 md:p-8 shadow-sm space-y-4">
+            <h3 className="text-sm font-extrabold text-blue-900 uppercase tracking-wider">
+              Why LifeLine Recommends These Opportunities
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(docInsights.recommendationReasons || [
+                "Strong Flutter development experience",
+                "Mobile application background",
+                "Firebase integration skills",
+                "Suitable for immediate freelance work",
+                "High alignment with long-term technical career paths"
+              ]).map((reason: string, idx: number) => (
+                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 bg-emerald-50/40 border border-emerald-100/50 p-3 rounded-xl">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
+                  <span className="font-bold text-slate-800 leading-tight">{reason}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 3 — IMMEDIATE OPPORTUNITIES */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-base font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                Earn Income Now
               </h3>
-              <div className="grid gap-2.5">
-                {docInsights.temporaryOpportunities.map((opp: any, i: number) => (
-                  <OpportunityCard key={i} opp={opp} type="temporary" />
-                ))}
-              </div>
+              <Badge className="bg-blue-100 text-blue-700 font-bold text-[9px] px-2 py-0.5 uppercase border-none rounded-full tracking-wider">
+                Immediate Actions
+              </Badge>
             </div>
 
-            <div className="space-y-2.5">
-              <h3 className="text-sm font-bold text-blue-900 flex items-center gap-1.5 uppercase tracking-wide">
-                <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5">Future</Badge>
-                Growth Opportunities
-              </h3>
-              <div className="grid gap-2.5">
-                {docInsights.growthOpportunities.map((opp: any, i: number) => (
-                  <OpportunityCard key={i} opp={opp} type="growth" />
-                ))}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(docInsights.temporaryOpportunities || []).map((opp: any, idx: number) => {
+                const isFlutter = opp.title.toLowerCase().includes("flutter") || opp.title.toLowerCase().includes("mobile");
+                const income = isFlutter ? "$$$" : "$$";
+                return (
+                  <Card key={idx} className="border-l-4 border-l-blue-500 bg-white hover:shadow-md transition-all rounded-2xl overflow-hidden border-slate-100 shadow-sm">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <h4 className="font-extrabold text-slate-800 text-[15px] leading-snug">{opp.title}</h4>
+                        </div>
+                        <Badge className="bg-blue-100 text-blue-700 border-none font-bold text-[10px] shrink-0 px-2 py-0.5">
+                          {opp.matchScore}% Match
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-slate-50">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Why Matched</p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {(opp.matchPoints || []).map((pt: string, i: number) => (
+                            <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span>{pt}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Income Potential</p>
+                          <p className="text-xs font-bold text-blue-900 flex items-center gap-0.5">
+                            <span className="text-blue-600 tracking-wider font-extrabold">{income}</span>
+                          </p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Start Time</p>
+                          <p className="text-xs font-bold text-emerald-600">Immediate</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
+          </div>
+
+          {/* SECTION 4 — LONG-TERM GROWTH PATH */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-base font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Career Growth Path
+              </h3>
+              <Badge className="bg-emerald-100 text-emerald-700 font-bold text-[9px] px-2 py-0.5 uppercase border-none rounded-full tracking-wider">
+                Future Development
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(docInsights.growthOpportunities || []).map((opp: any, idx: number) => {
+                return (
+                  <Card key={idx} className="border-l-4 border-l-emerald-500 bg-white hover:shadow-md transition-all rounded-2xl overflow-hidden border-slate-100 shadow-sm">
+                    <CardContent className="p-5 space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-1">
+                          <h4 className="font-extrabold text-slate-800 text-[15px] leading-snug">{opp.title}</h4>
+                        </div>
+                        <Badge className="bg-emerald-100 text-emerald-700 border-none font-bold text-[10px] shrink-0 px-2 py-0.5">
+                          {opp.matchScore}% Match
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-2 pt-2 border-t border-slate-50">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none">Why Matched</p>
+                        <div className="grid grid-cols-1 gap-1">
+                          {(opp.matchPoints || []).map((pt: string, i: number) => (
+                            <div key={i} className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                              <span>{pt}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-50">
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estimated Growth</p>
+                          <p className="text-xs font-bold text-blue-900">High</p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Time Horizon</p>
+                          <p className="text-xs font-bold text-slate-600">6–24 Months</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-100 p-3.5 rounded-xl text-center">
+            <p className="text-[11px] text-blue-700 font-medium leading-relaxed">
+              "These suggestions are based on the information you shared and are intended to support—not replace—your own judgment."
+            </p>
           </div>
         </div>
       ) : (
